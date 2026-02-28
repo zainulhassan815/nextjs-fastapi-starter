@@ -6,6 +6,11 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import context
 from app.config import settings
 from app.db import Base
+from app.budget.models import CostLog  # noqa: F401 — ensure model is registered
+from app.content.models import Post  # noqa: F401 — ensure model is registered
+from app.detection.models import DetectionMethod  # noqa: F401 — ensure model is registered
+from app.moderation.models import ModerationResult  # noqa: F401 — ensure model is registered
+from app.review.models import ReviewItem  # noqa: F401 — ensure model is registered
 from app.users.models import User  # noqa: F401 — ensure model is registered
 
 config = context.config
