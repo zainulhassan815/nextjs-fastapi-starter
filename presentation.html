@@ -95,7 +95,7 @@
     code span.vs { color: #e6db74; } /* VerbatimString */
     code span.wa { color: #ff5555; } /* Warning */
   </style>
-  <link rel="stylesheet" href="presentation_files/libs/revealjs/dist/theme/quarto-3a838ba4d842d7d9dc9c62596a7478fe.css">
+  <link rel="stylesheet" href="presentation_files/libs/revealjs/dist/theme/quarto-4541954b6ec112ffd6336e5cfdd511e8.css">
   <link href="presentation_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="presentation_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="presentation_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -284,7 +284,7 @@ Stranger Syntax
 </section>
 <section class="slide level2 center">
 <h2>Our Approach: 3-Stage Adaptive Pipeline</h2>
-<div class="cell" data-reveal="true" data-fig-width="11" data-layout-align="default">
+<div class="cell" data-reveal="true" data-fig-width="10" data-fig-height="4.5" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class=""><p></p>
@@ -297,9 +297,8 @@ Stranger Syntax
     C --&gt;|"safe"| S2["✅ Safe"]
     C --&gt;|"harmful"| H2["🚫 Auto-Remove"]
     C --&gt;|"uncertain"| D["🔬 Stage 3: Detailed Claude\n~4s | ~$0.0004"]
-    D --&gt;|"safe"| S3["✅ Safe"]
-    D --&gt;|"harmful"| H3["🚫 Auto-Remove"]
-    D --&gt;|"escalate"| E["👤 Human Review Queue\n20/hour budget"]
+    D --&gt;|"safe / harmful"| S3["✅ Done"]
+    D --&gt;|"escalate"| E["👤 Human Review\n20/hour budget"]
 
     style B fill:#166534,stroke:#4ade80,color:#fff
     style C fill:#854d0e,stroke:#facc15,color:#fff
@@ -310,7 +309,6 @@ Stranger Syntax
     style S3 fill:#14532d,stroke:#4ade80,color:#4ade80
     style H1 fill:#7f1d1d,stroke:#f87171,color:#f87171
     style H2 fill:#7f1d1d,stroke:#f87171,color:#f87171
-    style H3 fill:#7f1d1d,stroke:#f87171,color:#f87171
 </pre>
 </div>
 <p></p></figure><p></p>
@@ -320,10 +318,9 @@ Stranger Syntax
 </section>
 <section class="slide level2 smaller center">
 <h2>Stage 1: Keyword Scan</h2>
-<p><strong>Fast, free, multilingual first filter</strong></p>
 <div class="columns">
-<div class="column" style="width:55%;">
-<div class="cell" data-reveal="true" data-fig-width="6" data-layout-align="default">
+<div class="column" style="width:50%;">
+<div class="cell" data-reveal="true" data-fig-width="5" data-fig-height="3.5" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class=""><p></p>
@@ -332,8 +329,8 @@ Stranger Syntax
     A["Incoming Post"] --&gt; B["Detect Language"]
     B --&gt; C["Scan Keywords\nEN + UR + Roman UR"]
     C --&gt;|"0 hits"| D["✅ Safe"]
-    C --&gt;|"1–2 hits"| E["⚠️ Uncertain\n→ Stage 2"]
-    C --&gt;|"3+ hits"| F["🚫 Harmful\nauto-remove"]
+    C --&gt;|"1–2 hits"| E["⚠️ → Stage 2"]
+    C --&gt;|"3+ hits"| F["🚫 Auto-remove"]
 
     style D fill:#14532d,stroke:#4ade80,color:#4ade80
     style E fill:#854d0e,stroke:#facc15,color:#fff
@@ -344,41 +341,33 @@ Stranger Syntax
 </div>
 </div>
 </div>
-</div><div class="column" style="width:45%;">
+</div><div class="column" style="width:50%;">
 <p><strong>Multilingual keywords:</strong></p>
 <pre><code>English: kill, bomb, attack, terrorism...
 Urdu:    قتل، بم، حملہ، دہشت، نفرت
 Roman:   maar, qatal, bomb, hamla...</code></pre>
 <p><strong>Language detection:</strong></p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> urdu_chars <span class="op">&gt;</span> <span class="dv">30</span><span class="op">%</span>:</span>
-<span id="cb2-2"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">"urdu"</span></span>
-<span id="cb2-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> roman_urdu_markers <span class="op">&gt;=</span> <span class="dv">2</span>:</span>
-<span id="cb2-4"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">"roman_urdu"</span></span>
-<span id="cb2-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> <span class="st">"english"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> urdu_chars <span class="op">&gt;</span> <span class="dv">30</span><span class="op">%</span>:       <span class="cf">return</span> <span class="st">"urdu"</span></span>
+<span id="cb2-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> roman_urdu_markers <span class="op">&gt;=</span> <span class="dv">2</span>: <span class="cf">return</span> <span class="st">"roman_urdu"</span></span>
+<span id="cb2-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> <span class="st">"english"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Cost: $0.00 | Latency: &lt;50ms</strong></p>
+</div></div>
 </section>
 <section class="slide level2 smaller center">
 <h2>Stage 2: Lightweight AI Analysis</h2>
-<p><strong>Context-aware detection with prompt rotation</strong></p>
 <div class="columns">
-<div class="column" style="width:55%;">
-<div class="cell" data-reveal="true" data-fig-width="6" data-layout-align="default">
+<div class="column" style="width:50%;">
+<div class="cell" data-reveal="true" data-fig-width="5.5" data-fig-height="3.5" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class=""><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart TD
-    A["Uncertain Post\nfrom Stage 1"] --&gt; B{"Budget\nRemaining?"}
-    B --&gt;|"No"| X["⚠️ Skip AI\n→ Escalate"]
-    B --&gt;|"Yes"| C["Select Prompt\n(weighted random by decay)"]
-    C --&gt; P1["safety_check_v1"]
-    C --&gt; P2["context_analyzer_v1"]
-    C --&gt; P3["narrative_detector_v1"]
-    C --&gt; P4["framing_analyzer_v1"]
-    C --&gt; P5["selective_presentation_v1"]
-    P1 &amp; P2 &amp; P3 &amp; P4 &amp; P5 --&gt; D["Claude Haiku\nAnalysis"]
-    D --&gt; E["Verdict + Confidence\n+ Manipulation Tactics"]
+    A["Uncertain Post"] --&gt; B{"Budget OK?"}
+    B --&gt;|"No"| X["⚠️ Escalate"]
+    B --&gt;|"Yes"| C["Select Prompt\nweighted by decay"]
+    C --&gt; D["Claude Haiku"]
+    D --&gt; E["Verdict + Tactics"]
 
     style B fill:#1e1b4b,stroke:#7c3aed,color:#fff
     style D fill:#854d0e,stroke:#facc15,color:#fff
@@ -389,27 +378,26 @@ Roman:   maar, qatal, bomb, hamla...</code></pre>
 </div>
 </div>
 </div>
-</div><div class="column" style="width:45%;">
-<p><strong>What it detects beyond keywords:</strong></p>
-<ul>
-<li>Selective facts presented to mislead</li>
-<li>Cherry-picked statistics without context</li>
-<li>Emotional manipulation with real data</li>
-<li>True statements made misleading by omission</li>
-<li>Misleading juxtaposition</li>
-</ul>
-<p><strong>Budget gate:</strong> If monthly budget exceeded, skip AI → escalate to human.</p>
+</div><div class="column" style="width:50%;">
+<p><strong>5 rotating prompt variants:</strong></p>
+<ol type="1">
+<li><code>safety_check_v1</code> — Explicit harm</li>
+<li><code>context_analyzer_v1</code> — Framing bias</li>
+<li><code>narrative_detector_v1</code> — Cherry-picked data</li>
+<li><code>framing_analyzer_v1</code> — Loaded language</li>
+<li><code>selective_presentation_v1</code> — Missing context</li>
+</ol>
+<p><strong>Detects beyond keywords:</strong> selective facts, cherry-picked stats, emotional manipulation, misleading omission</p>
+<p><strong>Cost: ~$0.0002/call | Latency: ~2s</strong></p>
 </div></div>
-<p><strong>Model: Claude Haiku | Cost: ~$0.0002/call | Latency: ~2s</strong></p>
 </section>
 <section class="slide level2 smaller center">
 <h2>Stage 3: Deep Analysis + Human Escalation</h2>
-<p><strong>Full-context reasoning for the hardest cases</strong></p>
 <div class="columns">
 <div class="column" style="width:50%;">
 <p><strong>Receives from Stage 2:</strong></p>
 <ul>
-<li>Original content + language</li>
+<li>Original content + detected language</li>
 <li>Stage 2 reasoning + verdict</li>
 <li>Detected manipulation tactics</li>
 </ul>
@@ -425,11 +413,11 @@ Roman:   maar, qatal, bomb, hamla...</code></pre>
 <p><em>“Content that is factually correct but deliberately omits important context <strong>IS</strong> harmful.”</em></p>
 </blockquote>
 <p><strong>If still uncertain → Escalate</strong></p>
-<p>Creates a <code>ReviewItem</code> with full AI reasoning for human moderator.</p>
+<p>Creates a <code>ReviewItem</code> with full AI reasoning for the human moderator.</p>
+<p><strong>Cost: ~$0.0004/call | Latency: ~4s</strong></p>
 </div></div>
-<p><strong>Model: Claude Haiku | Cost: ~$0.0004/call | Latency: ~4s</strong></p>
 </section>
-<section class="slide level2 center">
+<section class="slide level2 smaller center">
 <h2>Constraint 1: Signal Collapse</h2>
 <blockquote>
 <p><em>“Every detection method becomes less effective if overused.”</em></p>
@@ -438,30 +426,28 @@ Roman:   maar, qatal, bomb, hamla...</code></pre>
 <div class="column" style="width:50%;">
 <p><strong>Our solution: Detection method decay</strong></p>
 <ul>
-<li>Each prompt variant has a <strong>decay factor</strong> (1.0 → 0.1)</li>
+<li>Each prompt has a <strong>decay factor</strong> (1.0 → 0.1)</li>
 <li>Every use reduces it by <strong>2%</strong></li>
-<li>Selection is <strong>weighted random</strong> — overused methods picked less often</li>
-<li>Minimum floor of <strong>10%</strong> — never fully excluded</li>
-<li>Manual <strong>reset</strong> available when needed</li>
+<li>Selection is <strong>weighted random</strong></li>
+<li>Floor of <strong>10%</strong> — never fully excluded</li>
+<li>Manual <strong>reset</strong> when needed</li>
 </ul>
 </div><div class="column" style="width:50%;">
-<div class="cell" data-reveal="true" data-fig-width="5.5" data-layout-align="default">
+<div class="cell" data-reveal="true" data-fig-width="5" data-fig-height="3.5" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class=""><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart TD
-    A["Method Pool\n5 prompt variants"] --&gt; B["Weighted Random\nSelection"]
-    B --&gt; C["Selected Method\nruns analysis"]
-    C --&gt; D["Record Usage\ndecay -= 2%"]
-    D --&gt; E{"decay_factor\n&lt; 0.1?"}
-    E --&gt;|"Yes"| F["Floor at 0.1\nnever excluded"]
-    E --&gt;|"No"| G["Updated weight\nfor next selection"]
+    A["Method Pool\n5 variants"] --&gt; B["Weighted Random\nSelection"]
+    B --&gt; C["Run Analysis"]
+    C --&gt; D["decay -= 2%"]
+    D --&gt; E{"&lt; 0.1?"}
+    E --&gt;|"Yes"| F["Floor at 0.1"]
+    E --&gt;|"No"| A
     F --&gt; A
-    G --&gt; A
 
     style A fill:#1e1b4b,stroke:#7c3aed,color:#fff
-    style B fill:#1e1b4b,stroke:#a78bfa,color:#fff
     style D fill:#854d0e,stroke:#facc15,color:#fff
     style F fill:#7f1d1d,stroke:#f87171,color:#f87171
 </pre>
@@ -472,72 +458,66 @@ Roman:   maar, qatal, bomb, hamla...</code></pre>
 </div>
 </div></div>
 </section>
-<section class="slide level2 center">
+<section class="slide level2 smaller center">
 <h2>Constraint 2: Partial Observability</h2>
 <blockquote>
 <p><em>“Content arrives in stages — waiting for full data violates latency.”</em></p>
 </blockquote>
-<div class="cell" data-reveal="true" data-fig-width="11" data-layout-align="default">
+<div class="cell" data-reveal="true" data-fig-width="10" data-fig-height="2.5" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class=""><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart LR
     subgraph S1["⚡ Stage 1 — sync, &lt;50ms"]
-        A1["Metadata\n+ Keywords"]
+        A1["Metadata + Keywords"]
     end
     subgraph S2["🤖 Stage 2 — async, ~2s"]
-        A2["Partial Content\n1 AI Prompt"]
+        A2["Partial Content via AI"]
     end
     subgraph S3["🔬 Stage 3 — async, ~4s"]
-        A3["Full Context\n+ Prior Reasoning"]
+        A3["Full Context + Reasoning"]
     end
 
     A1 --&gt;|"uncertain"| A2
     A2 --&gt;|"uncertain"| A3
-
-    A1 --&gt;|"clear verdict"| D1["✅ Done"]
+    A1 --&gt;|"clear"| D1["✅ Done"]
     A2 --&gt;|"confident"| D2["✅ Done"]
-    A3 --&gt;|"decides or escalates"| D3["✅ Done"]
+    A3 --&gt;|"decides"| D3["✅ Done"]
 
     style S1 fill:#166534,stroke:#4ade80,color:#fff
     style S2 fill:#854d0e,stroke:#facc15,color:#fff
     style S3 fill:#991b1b,stroke:#f87171,color:#fff
-    style D1 fill:#14532d,stroke:#4ade80,color:#4ade80
-    style D2 fill:#14532d,stroke:#4ade80,color:#4ade80
-    style D3 fill:#14532d,stroke:#4ade80,color:#4ade80
 </pre>
 </div>
 <p></p></figure><p></p>
 </div>
 </div>
 </div>
-<p><strong>Key:</strong> Stages 2 &amp; 3 run as <strong>background tasks</strong> — the user gets an immediate response. Post status updates asynchronously.</p>
+<p>Stages 2 &amp; 3 run as <strong>background tasks</strong> — user gets an immediate response. Post status updates asynchronously.</p>
 </section>
-<section class="slide level2 center">
+<section class="slide level2 smaller center">
 <h2>Constraint 3: Human Trust Budget</h2>
 <blockquote>
 <p><em>“Only 20 human reviews per hour.”</em></p>
 </blockquote>
 <div class="columns">
-<div class="column" style="width:55%;">
-<div class="cell" data-reveal="true" data-fig-width="6" data-layout-align="default">
+<div class="column" style="width:50%;">
+<div class="cell" data-reveal="true" data-fig-width="5" data-fig-height="3.5" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class=""><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart TD
-    A["Stage 3 Escalates Post"] --&gt; B["Review Queue"]
-    B --&gt; C{"Reviews this\nhour &lt; 20?"}
-    C --&gt;|"Yes"| D["Moderator Reviews\n+ AI reasoning\n+ manipulation tactics"]
-    D --&gt; E["Approve ✅"]
-    D --&gt; F["Reject 🚫"]
-    C --&gt;|"No"| G["⏳ HTTP 429\nBudget Exhausted\nWait for next hour"]
+    A["Stage 3 Escalates"] --&gt; B["Review Queue"]
+    B --&gt; C{"&lt; 20 this\nhour?"}
+    C --&gt;|"Yes"| D["Moderator Reviews\nwith AI reasoning"]
+    D --&gt; E["Approve / Reject"]
+    C --&gt;|"No"| G["HTTP 429\nWait next hour"]
 
     style B fill:#1e3a5f,stroke:#60a5fa,color:#fff
     style C fill:#1e1b4b,stroke:#7c3aed,color:#fff
     style E fill:#14532d,stroke:#4ade80,color:#4ade80
-    style F fill:#7f1d1d,stroke:#f87171,color:#f87171
     style G fill:#854d0e,stroke:#facc15,color:#fff
 </pre>
 </div>
@@ -545,7 +525,7 @@ Roman:   maar, qatal, bomb, hamla...</code></pre>
 </div>
 </div>
 </div>
-</div><div class="column" style="width:45%;">
+</div><div class="column" style="width:50%;">
 <p><strong>Review queue provides:</strong></p>
 <ul>
 <li>Original post content</li>
@@ -556,7 +536,7 @@ Roman:   maar, qatal, bomb, hamla...</code></pre>
 <p><strong>Most content never needs a human.</strong> The 3-stage pipeline filters aggressively — only truly ambiguous cases escalate.</p>
 </div></div>
 </section>
-<section class="slide level2 center">
+<section class="slide level2 smaller center">
 <h2>Constraint 4: Multilingual Ambiguity</h2>
 <blockquote>
 <p><em>“yeh fire hai” — praise or threat?</em></p>
@@ -582,67 +562,64 @@ Roman:   maar, qatal, bomb, hamla...</code></pre>
 <p><strong>We penalize overconfidence, not uncertainty.</strong></p>
 </div>
 </section>
-<section class="slide level2 center">
+<section class="slide level2 smaller center">
 <h2>Constraint 5: Poisoned Feedback Loop</h2>
 <blockquote>
 <p><em>“~15% of human labels are noisy or adversarial.”</em></p>
 </blockquote>
 <div class="columns">
-<div class="column" style="width:55%;">
-<div class="cell" data-reveal="true" data-fig-width="6" data-layout-align="default">
+<div class="column" style="width:50%;">
+<div class="cell" data-reveal="true" data-fig-width="5" data-fig-height="3" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class=""><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart TD
-    A["Human Submits\nReview Decision"] --&gt; B["Log: reviewer_id\ntimestamp, note"]
-    B --&gt; C["Store alongside\nAI reasoning"]
-    C --&gt; D["Audit Trail\n(no auto-retrain)"]
-    D --&gt; E["Future: Label\nConfidence Scoring"]
+    A["Human Decision"] --&gt; B["Log reviewer_id\ntimestamp, note"]
+    B --&gt; C["Store with\nAI reasoning"]
+    C --&gt; D["Audit Trail\nno auto-retrain"]
 
-    N["⚠️ ~15% Noisy Labels"] -.-&gt;|"detected via\ndiscrepancy audit"| D
+    N["⚠️ ~15% Noisy"] -.-&gt;|"discrepancy\naudit"| D
 
     style A fill:#1e3a5f,stroke:#60a5fa,color:#fff
     style D fill:#1e1b4b,stroke:#7c3aed,color:#fff
     style N fill:#7f1d1d,stroke:#f87171,color:#f87171
-    style E fill:#14532d,stroke:#4ade80,color:#4ade80
 </pre>
 </div>
 <p></p></figure><p></p>
 </div>
 </div>
 </div>
-</div><div class="column" style="width:45%;">
+</div><div class="column" style="width:50%;">
 <p><strong>Our approach: Audit trail, not blind trust</strong></p>
 <ul>
-<li>Every human review is <strong>logged</strong> with reviewer ID, timestamp, and notes</li>
-<li>AI reasoning is <strong>preserved alongside</strong> human decisions</li>
-<li>No automatic retraining on raw labels</li>
+<li>Every review <strong>logged</strong> with reviewer ID, timestamp, notes</li>
+<li>AI reasoning <strong>preserved alongside</strong> human decisions</li>
+<li><strong>No automatic retraining</strong> on raw labels</li>
 <li>Discrepancies between AI and human can be audited</li>
 <li>Foundation for future <strong>label confidence scoring</strong></li>
 </ul>
 </div></div>
 </section>
-<section class="slide level2 center">
+<section class="slide level2 smaller center">
 <h2>Constraint 6: Budget Reality</h2>
 <blockquote>
 <p><em>“PKR 50,000/month (~$175 USD) for everything.”</em></p>
 </blockquote>
 <div class="columns">
-<div class="column" style="width:55%;">
-<div class="cell" data-reveal="true" data-fig-width="6" data-layout-align="default">
+<div class="column" style="width:50%;">
+<div class="cell" data-reveal="true" data-fig-width="5" data-fig-height="3" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class=""><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart TD
-    A["Claude API Call"] --&gt; B["Log to cost_logs\ntokens × rate"]
-    B --&gt; C["Monthly Spend\nTracker"]
-    C --&gt; D{"spent &lt;\n$175?"}
-    D --&gt;|"Yes"| E["✅ Proceed\nwith AI analysis"]
-    D --&gt;|"No"| F["⛔ Budget Gate\nKeyword-only mode\n+ Human escalation"]
+    A["Claude API Call"] --&gt; B["Log cost\ntokens × rate"]
+    B --&gt; C{"spent &lt; $175?"}
+    C --&gt;|"Yes"| E["✅ Proceed"]
+    C --&gt;|"No"| F["⛔ Keyword-only\n+ Human escalation"]
 
-    style D fill:#1e1b4b,stroke:#7c3aed,color:#fff
+    style C fill:#1e1b4b,stroke:#7c3aed,color:#fff
     style E fill:#14532d,stroke:#4ade80,color:#4ade80
     style F fill:#7f1d1d,stroke:#f87171,color:#f87171
 </pre>
@@ -651,7 +628,7 @@ Roman:   maar, qatal, bomb, hamla...</code></pre>
 </div>
 </div>
 </div>
-</div><div class="column" style="width:45%;">
+</div><div class="column" style="width:50%;">
 <p><strong>Estimated monthly cost:</strong></p>
 <table class="caption-top">
 <thead>
@@ -684,91 +661,85 @@ Roman:   maar, qatal, bomb, hamla...</code></pre>
 </tr>
 </tbody>
 </table>
-<p><br></p>
-<p><strong>$14 of $175 = 8% utilization</strong></p>
-<p>Room for <strong>12x growth</strong> before budget pressure.</p>
+<p><strong>$14 of $175 = 8% utilization</strong> — room for <strong>12x growth</strong>.</p>
 </div></div>
 </section>
 <section class="slide level2 smaller center">
-<h2>Design Reasoning: Why a Pipeline?</h2>
-<p><strong>The core question:</strong> How should content flow through the system?</p>
+<h2>Reasoning: Why a Pipeline?</h2>
 <div class="columns">
 <div class="column" style="width:50%;">
 <p><strong>Alternatives we rejected:</strong></p>
-<ol type="1">
-<li><strong>Single-model classification</strong> — Send everything to Claude
+<p><strong>1. Single-model classification</strong> — Send everything to Claude</p>
 <ul>
-<li>Costs ~$0.0004/post. At 100K posts/mo = $40. Feasible but wasteful — most content is obviously safe or obviously harmful</li>
-<li>No adaptation. One prompt = one signal = easy for adversaries to learn</li>
-</ul></li>
-<li><strong>Ensemble of models voting</strong> — Run 3 models, take majority
+<li>~$0.0004/post × 100K = $40/mo. Feasible but wasteful</li>
+<li>One prompt = one signal = easy for adversaries to learn</li>
+</ul>
+<p><strong>2. Ensemble voting</strong> — 3 models, majority wins</p>
 <ul>
 <li>3x cost for every post. Blows budget at scale</li>
 <li>Adversary only needs to fool 2 of 3</li>
-</ul></li>
-<li><strong>Human-first triage</strong> — Humans scan everything, AI assists
+</ul>
+<p><strong>3. Human-first triage</strong></p>
 <ul>
-<li>20 reviews/hour = 480/day. Platform likely has thousands of posts. Impossible</li>
-</ul></li>
-</ol>
+<li>20/hr = 480/day. Platform has thousands of posts. Impossible</li>
+</ul>
 </div><div class="column" style="width:50%;">
 <p><strong>Why staged pipeline wins:</strong></p>
 <ul>
-<li><strong>Cost cascade</strong>: Most content exits at Stage 1 (free). Only uncertain cases pay for AI. Only the hardest cases use expensive Stage 3</li>
-<li><strong>Latency cascade</strong>: Easy decisions are instant. Hard decisions take longer — but that’s acceptable because they’re genuinely hard</li>
-<li><strong>Each stage adds different information</strong>: keywords → single AI perspective → full context reasoning</li>
-<li><strong>Maps directly to partial observability constraint</strong>: Stage 1 = metadata, Stage 2 = partial content, Stage 3 = full content</li>
+<li><strong>Cost cascade</strong>: Most content exits at Stage 1 (free). Only uncertain cases pay for AI</li>
+<li><strong>Latency cascade</strong>: Easy decisions are instant. Hard decisions take longer — acceptable</li>
+<li><strong>Each stage adds different info</strong>: keywords → AI perspective → full context</li>
+<li><strong>Maps to partial observability</strong>: Stage 1 = metadata, Stage 2 = partial, Stage 3 = full</li>
 </ul>
-</div></div>
 <div class="fragment">
 <p><strong>The pipeline is not just an optimization — it’s the natural shape of the problem.</strong></p>
 </div>
+</div></div>
 </section>
 <section class="slide level2 smaller center">
-<h2>Design Reasoning: Why These Thresholds?</h2>
+<h2>Reasoning: Why These Thresholds?</h2>
 <p><strong>Stage 1: Why 3+ keywords = auto-remove?</strong></p>
 <div class="columns">
 <div class="column" style="width:50%;">
 <p><strong>The tradeoff:</strong></p>
 <ul>
-<li><strong>Too low (1 hit)</strong>: “The bomb pasta recipe was killer” gets removed. High false positives → users lose trust in the platform</li>
-<li><strong>Too high (5+ hits)</strong>: Genuinely harmful content with 3-4 harmful terms slips through to Stage 2, wasting AI budget</li>
-<li><strong>3 hits</strong>: A post with 3 harmful keywords across 3 languages is almost certainly not accidental. False positive rate is low enough to justify auto-action</li>
+<li><strong>Too low (1 hit)</strong>: “The bomb pasta recipe was killer” gets removed. Users lose trust</li>
+<li><strong>Too high (5+)</strong>: Harmful content with 3-4 terms slips to Stage 2, wasting AI budget</li>
+<li><strong>3 hits</strong>: Across 3 languages, almost certainly not accidental</li>
 </ul>
 <p><strong>Why 0 hits = safe (skip AI)?</strong></p>
-<p>If a post contains zero matches across 24+ keywords in 3 languages, the probability it’s harmful via explicit content is very low. Contextual manipulation (no keywords) is harder to detect at Stage 1 — but that’s exactly what Stage 2’s prompt rotation handles.</p>
+<p>Zero matches across 24+ keywords in 3 languages → probability of explicit harm is very low.</p>
 </div><div class="column" style="width:50%;">
-<p><strong>The honest gap:</strong></p>
-<p>Contextually misleading content with zero harmful keywords <strong>will bypass Stage 1</strong>. This is by design.</p>
+<p><strong>The honest gap we accept:</strong></p>
+<p>Contextually misleading content with zero harmful keywords <strong>will bypass Stage 1</strong>.</p>
 <ul>
-<li>“Unemployment rose 50% in Karachi” (true but cherry-picked from a recovery quarter)</li>
-<li>Contains no harmful keywords</li>
-<li>Passes Stage 1 as “safe”</li>
+<li>“Unemployment rose 50% in Karachi” (true but cherry-picked)</li>
+<li>Contains no harmful keywords → passes as “safe”</li>
 </ul>
-<p><strong>Our mitigation:</strong> This is why the mid-challenge update matters. We added 5 manipulation-focused prompt variants specifically for content that is “factually correct but contextually misleading.” But these only run in Stage 2 — and Stage 2 only runs on uncertain content from Stage 1.</p>
-<p><strong>We accept this gap</strong> because the alternative (running AI on every post) costs 12x more and doesn’t respect the budget constraint.</p>
+<p><strong>Mitigation:</strong> 5 manipulation-focused prompt variants in Stage 2 handle “factually correct but misleading” content.</p>
+<p><strong>We accept this gap</strong> because running AI on every post costs 12x more.</p>
 </div></div>
 </section>
 <section class="slide level2 smaller center">
-<h2>Design Reasoning: Why Prompt Rotation?</h2>
-<p><strong>The problem:</strong> If we use one prompt, adversaries learn exactly what it looks for and craft content to avoid it.</p>
-<div class="cell" data-reveal="true" data-fig-width="11" data-layout-align="default">
+<h2>Reasoning: Why Prompt Rotation?</h2>
+<p><strong>If we use one prompt, adversaries learn what it looks for.</strong></p>
+<div class="cell" data-reveal="true" data-fig-width="10" data-fig-height="3" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class=""><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart LR
-    subgraph Problem["❌ Single Prompt — Adversary Learns Pattern"]
-        P1["Always check for\nexplicit harm"] --&gt; ADV1["Adversary avoids\nexplicit terms"] --&gt; FAIL["Content passes\nevery time"]
+    subgraph Problem["❌ Single Prompt"]
+        P1["Always check\nexplicit harm"] --&gt; ADV1["Adversary avoids\nthose terms"] --&gt; FAIL["Passes\nevery time"]
     end
 
-    subgraph Solution["✅ Rotating Prompts — Adversary Can't Predict"]
-        R1["safety_check_v1\n(explicit harm)"]
-        R2["context_analyzer_v1\n(framing bias)"]
-        R3["narrative_detector_v1\n(cherry-picked data)"]
-        R4["framing_analyzer_v1\n(loaded language)"]
-        R5["selective_presentation_v1\n(missing context)"]
-        R1 &amp; R2 &amp; R3 &amp; R4 &amp; R5 --&gt; WIN["Adversary must evade\nALL 5 perspectives"]
+    subgraph Solution["✅ 5 Rotating Prompts"]
+        R1["safety_check"]
+        R2["context_analyzer"]
+        R3["narrative_detector"]
+        R4["framing_analyzer"]
+        R5["selective_presentation"]
+        R1 &amp; R2 &amp; R3 &amp; R4 &amp; R5 --&gt; WIN["Must evade\nALL 5"]
     end
 
     style Problem fill:#7f1d1d,stroke:#f87171,color:#fff
@@ -779,272 +750,235 @@ Roman:   maar, qatal, bomb, hamla...</code></pre>
 </div>
 </div>
 </div>
-<p><strong>Key insight:</strong> Each prompt variant targets a <strong>different manipulation technique</strong>. An adversary who learns to bypass “explicit harm detection” still gets caught by “selective presentation detection.”</p>
+<p>Each variant targets a <strong>different manipulation technique</strong>. Bypassing “explicit harm detection” doesn’t help against “selective presentation detection.”</p>
 </section>
 <section class="slide level2 smaller center">
-<h2>Design Reasoning: Why Decay, Not Rotation?</h2>
-<p><strong>Alternative considered:</strong> Simple round-robin (cycle through prompts 1→2→3→4→5→1…)</p>
+<h2>Reasoning: Why Decay, Not Round-Robin?</h2>
 <div class="columns">
 <div class="column" style="width:50%;">
 <p><strong>Why round-robin fails:</strong></p>
 <ul>
-<li><strong>Predictable.</strong> Adversary observes which posts get caught and when. After 5 posts, they know the cycle</li>
-<li><strong>No memory.</strong> If prompt 3 catches 90% of current attacks, round-robin still only uses it 20% of the time</li>
-<li><strong>No degradation signal.</strong> No way to know when a method is becoming ineffective</li>
+<li><strong>Predictable.</strong> After 5 posts, adversary knows the cycle</li>
+<li><strong>No memory.</strong> If prompt 3 catches 90% of attacks, it still only runs 20% of the time</li>
+<li><strong>No degradation signal.</strong> No way to know when a method is failing</li>
 </ul>
-<p><strong>Why weighted random with decay wins:</strong></p>
+<p><strong>Why weighted random + decay wins:</strong></p>
 <ul>
-<li><strong>Unpredictable.</strong> Even with identical content, the selected prompt varies</li>
-<li><strong>Self-adjusting.</strong> Overused methods naturally get selected less. Fresh methods get more weight</li>
-<li><strong>Observable.</strong> Dashboard shows decay factors — operators can see system health in real-time</li>
+<li><strong>Unpredictable.</strong> Same content, different prompt each time</li>
+<li><strong>Self-adjusting.</strong> Overused methods naturally selected less</li>
+<li><strong>Observable.</strong> Dashboard shows decay — operators see health</li>
 </ul>
 </div><div class="column" style="width:50%;">
 <p><strong>The decay math:</strong></p>
 <ul>
 <li><code>decay_rate = 0.02</code> (2% per use)</li>
 <li><code>min_decay = 0.1</code> (10% floor)</li>
-<li>After 45 uses: <code>1.0 - (45 × 0.02) = 0.10</code> (floor)</li>
+<li>After 45 uses: reaches floor</li>
 </ul>
-<p><strong>Why 2% and not 5% or 10%?</strong></p>
+<p><strong>Why 2% specifically?</strong></p>
 <ul>
-<li><strong>5-10%</strong>: Methods hit floor after 10-18 uses. Too aggressive — methods rotate too fast, the system becomes unstable</li>
-<li><strong>1%</strong>: Takes 90 uses to reach floor. Too slow — adversary has too many attempts against the same method</li>
-<li><strong>2%</strong>: ~45 uses per method. With 5 methods at equal usage, that’s ~225 total posts before any method hits floor. Reasonable for a daily cycle</li>
+<li><strong>5-10%</strong>: Floor after 10-18 uses. Too aggressive — system becomes unstable</li>
+<li><strong>1%</strong>: 90 uses to floor. Too slow — adversary exploits same method too long</li>
+<li><strong>2%</strong>: ~45 uses/method, ~225 total posts before any hits floor. Good daily cycle</li>
 </ul>
-<p><strong>Why a floor of 10%, not 0%?</strong></p>
-<p>Excluding a method entirely means adversaries know it’s gone. A 10% chance means it could still appear — maintaining uncertainty.</p>
+<p><strong>Why floor at 10%, not 0%?</strong></p>
+<p>Excluding a method entirely means adversaries <strong>know it’s gone</strong>. 10% keeps them uncertain.</p>
 </div></div>
 </section>
 <section class="slide level2 smaller center">
-<h2>Design Reasoning: Budget Strategy</h2>
-<p><strong>The budget is the hardest constraint.</strong> $175/mo sounds generous until you do the math.</p>
+<h2>Reasoning: Budget Strategy</h2>
+<p><strong>Why Claude Haiku, not Sonnet or Opus?</strong></p>
 <div class="columns">
 <div class="column" style="width:50%;">
-<p><strong>Why Claude Haiku (not Sonnet/Opus)?</strong></p>
 <table class="caption-top">
 <thead>
 <tr class="header">
 <th>Model</th>
-<th>Input/1K tok</th>
-<th>Output/1K tok</th>
-<th>Cost per call</th>
+<th>Cost/call</th>
+<th>Monthly capacity</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Haiku</td>
-<td>$0.00025</td>
-<td>$0.00125</td>
+<td><strong>Haiku</strong></td>
 <td>~$0.0002</td>
+<td><strong>~875K calls</strong></td>
 </tr>
 <tr class="even">
 <td>Sonnet</td>
-<td>$0.003</td>
-<td>$0.015</td>
 <td>~$0.003</td>
+<td>~58K calls</td>
 </tr>
 <tr class="odd">
 <td>Opus</td>
-<td>$0.015</td>
-<td>$0.075</td>
 <td>~$0.015</td>
+<td>~11K calls</td>
 </tr>
 </tbody>
 </table>
-<ul>
-<li>Sonnet = <strong>15x</strong> more expensive → only ~58K calls/mo</li>
-<li>Opus = <strong>75x</strong> more expensive → only ~11K calls/mo</li>
-<li>Haiku = <strong>~875K calls/mo</strong> budget capacity</li>
-</ul>
-<p><strong>Tradeoff:</strong> Haiku is less capable at nuanced reasoning. We compensate with <strong>specific, targeted prompts</strong> that tell it exactly what to look for, rather than asking for general analysis.</p>
+<p>Haiku is <strong>15x cheaper</strong> than Sonnet.</p>
+<p><strong>Tradeoff:</strong> Less capable at nuanced reasoning. We compensate with <strong>specific, targeted prompts</strong> that tell it exactly what to look for.</p>
 </div><div class="column" style="width:50%;">
 <p><strong>Why not fine-tune a local model?</strong></p>
 <ul>
-<li>Fine-tuning cost: $500+ for a useful model. Exceeds 3 months of budget</li>
-<li>Hosting cost: GPU instance ~$100-500/mo. Eats entire budget</li>
-<li>Maintenance: Retraining as adversaries adapt requires ongoing compute</li>
-<li>With Haiku at ~$14/mo, we have <strong>$161 of headroom</strong> for spikes</li>
+<li>Fine-tuning: $500+. Exceeds 3 months of budget</li>
+<li>GPU hosting: $100-500/mo. Eats entire budget</li>
+<li>Retraining as adversaries adapt = ongoing cost</li>
+<li>Labels have 15% noise — fine-tuning on bad data</li>
 </ul>
-<p><strong>Graceful degradation when budget runs out:</strong></p>
-<pre><code>Budget OK    → Stage 1 + 2 + 3 (full pipeline)
-Budget tight → Stage 1 + 2 only (skip Stage 3)
-Budget gone  → Stage 1 only (keywords + human)</code></pre>
-<p>The system never fully stops. It degrades to a less capable but still functional mode. Keywords still catch obvious harm. Humans still review escalated content.</p>
+<p><strong>Graceful degradation:</strong></p>
+<pre><code>Budget OK    → Full pipeline (S1+S2+S3)
+Budget tight → S1 + S2 only
+Budget gone  → S1 only (keywords + human)</code></pre>
+<p>System never fully stops — degrades gracefully.</p>
 </div></div>
 </section>
 <section class="slide level2 smaller center">
-<h2>Design Reasoning: Human Review Budget</h2>
+<h2>Reasoning: Human Review Budget</h2>
 <p><strong>20 reviews/hour = the system’s most precious resource.</strong></p>
 <div class="columns">
 <div class="column" style="width:50%;">
-<p><strong>Why enforce at submission time, not at queue entry?</strong></p>
+<p><strong>Why enforce at submission, not queue entry?</strong></p>
 <ul>
-<li><strong>Queue entry enforcement</strong>: Posts pile up in queue, moderator sees them but can’t act. Frustrating UX, false sense of backlog</li>
-<li><strong>Submission enforcement</strong>: Moderator sees exactly what they can act on. No phantom queue. HTTP 429 is clear feedback: “come back next hour”</li>
+<li><strong>Queue entry</strong>: Posts pile up, moderator sees but can’t act. Frustrating UX</li>
+<li><strong>Submission</strong>: Moderator sees exactly what they can act on. HTTP 429 = clear “come back next hour”</li>
 </ul>
-<p><strong>Why not prioritize which posts humans see?</strong></p>
-<p>We considered scoring escalated posts by confidence and showing lowest-confidence first. We rejected this because:</p>
+<p><strong>Why not prioritize by confidence?</strong></p>
 <ul>
-<li>Adds complexity without clear benefit at 20/hr</li>
 <li>Low-confidence posts aren’t necessarily higher impact</li>
 <li>FIFO is transparent — moderators trust it</li>
+<li>Adds complexity without clear benefit at 20/hr</li>
 </ul>
 </div><div class="column" style="width:50%;">
 <p><strong>How AI reasoning helps humans:</strong></p>
-<p>Each review item shows:</p>
-<ul>
-<li>The AI’s <strong>verdict</strong> from Stage 2 and 3</li>
-<li>The AI’s <strong>reasoning</strong> (natural language explanation)</li>
-<li>Detected <strong>manipulation tactics</strong> (cherry-picked stats, loaded language, etc.)</li>
-</ul>
-<p><strong>This is deliberate.</strong> A moderator reviewing “yeh fire hai” without context is guessing. A moderator reviewing it with “AI detected possible threat language, but confidence is low because ‘fire’ is commonly used as praise in Roman Urdu” makes a <strong>better decision faster</strong>.</p>
-<p><strong>The tradeoff:</strong> AI reasoning could bias the human. We accept this because:</p>
-<ul>
-<li>Unbiased humans with no context make worse decisions</li>
-<li>The 15% noise rate already means human labels aren’t pure</li>
-<li>AI reasoning is logged alongside human decisions for auditing</li>
-</ul>
+<p>Each review item shows AI <strong>verdict</strong>, <strong>reasoning</strong>, and <strong>manipulation tactics</strong>.</p>
+<p>A moderator reviewing “yeh fire hai” with <em>“possible threat, but ‘fire’ is common praise in Roman Urdu”</em> makes a <strong>better decision faster</strong>.</p>
+<p><strong>Tradeoff:</strong> AI reasoning could bias the human.</p>
+<p>We accept this because unbiased humans with no context make <strong>worse</strong> decisions, and AI reasoning is logged for auditing.</p>
 </div></div>
 </section>
 <section class="slide level2 smaller center">
-<h2>Design Reasoning: Multilingual Approach</h2>
+<h2>Reasoning: Multilingual Approach</h2>
 <p><strong>Why heuristic language detection, not a library?</strong></p>
 <div class="columns">
 <div class="column" style="width:50%;">
 <p><strong>Alternatives considered:</strong></p>
 <ol type="1">
-<li><strong>langdetect / fasttext</strong>: Good for clean text. Fails on Roman Urdu (looks like misspelled English), code-mixed text (“yeh so cool hai”), and short posts</li>
-<li><strong>Google Translate API</strong>: Costs money per call. Adds latency. Eats into $175 budget</li>
-<li><strong>Let Claude detect language</strong>: Already paying for AI in Stage 2. But Stage 1 needs language for keyword selection <em>before</em> Claude runs</li>
+<li><strong>langdetect / fasttext</strong> — Fails on Roman Urdu (looks like misspelled English), code-mixed text, short posts</li>
+<li><strong>Google Translate API</strong> — Costs money, adds latency, eats budget</li>
+<li><strong>Let Claude detect</strong> — Stage 1 needs language <em>before</em> Claude runs</li>
 </ol>
 <p><strong>Our heuristic:</strong></p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># Urdu script = Urdu (high confidence)</span></span>
-<span id="cb4-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> urdu_chars <span class="op">&gt;</span> <span class="dv">30</span><span class="op">%</span> of text → <span class="st">"urdu"</span></span>
-<span id="cb4-3"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># Roman Urdu markers (hai, nahi, yeh, kya, mein...)</span></span>
-<span id="cb4-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> roman_urdu_words <span class="op">&gt;=</span> <span class="dv">2</span> → <span class="st">"roman_urdu"</span></span>
-<span id="cb4-6"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># Fallback</span></span>
-<span id="cb4-8"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span> → <span class="st">"english"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> urdu_chars <span class="op">&gt;</span> <span class="dv">30</span><span class="op">%</span>:       → <span class="st">"urdu"</span></span>
+<span id="cb4-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> roman_urdu_words <span class="op">&gt;=</span> <span class="dv">2</span>:  → <span class="st">"roman_urdu"</span></span>
+<span id="cb4-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:                      → <span class="st">"english"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div><div class="column" style="width:50%;">
 <p><strong>Tradeoffs we accept:</strong></p>
 <ul>
-<li><strong>False positive:</strong> “Yeh brand hai best” detected as Roman Urdu. Harmless — Stage 2 prompt includes language context either way</li>
-<li><strong>False negative:</strong> Single Roman Urdu word in English text (“that’s a jugaar solution”) detected as English. Low risk — Claude understands code-mixing regardless</li>
-<li><strong>30% threshold for Urdu:</strong> Lower catches more Urdu but misclassifies Arabic. Higher misses short Urdu posts. 30% is a pragmatic middle ground</li>
+<li><strong>False positive:</strong> “Yeh brand hai best” → Roman Urdu. Harmless — Claude handles it fine</li>
+<li><strong>False negative:</strong> Single Roman Urdu word in English missed. Low risk — Claude understands code-mixing</li>
+<li><strong>30% Urdu threshold:</strong> Lower misclassifies Arabic. Higher misses short Urdu. Pragmatic middle</li>
 </ul>
-<p><strong>Why this matters for moderation:</strong></p>
-<p>“yeh fire hai” classified correctly as Roman Urdu triggers <strong>cultural context analysis</strong> in Stage 2/3 prompts. Misclassified as English, Claude might miss that “fire” is common praise in South Asian slang.</p>
-<p><strong>We don’t force binary classification.</strong> “Uncertain” language → AI gets the full text and figures it out.</p>
+<p><strong>Why it matters:</strong></p>
+<p>“yeh fire hai” classified as Roman Urdu triggers <strong>cultural context analysis</strong>. Misclassified as English, Claude might miss that “fire” = common South Asian praise.</p>
 </div></div>
 </section>
 <section class="slide level2 smaller center">
-<h2>Design Reasoning: Poisoned Labels</h2>
-<p><strong>15% noise means 1 in ~7 human labels is wrong. This is a real threat.</strong></p>
+<h2>Reasoning: Poisoned Labels</h2>
+<p><strong>15% noise = 1 in ~7 labels is wrong.</strong></p>
 <div class="columns">
 <div class="column" style="width:50%;">
 <p><strong>What we do:</strong></p>
 <ul>
-<li><strong>Store everything.</strong> Every human decision + AI reasoning + timestamps + reviewer identity</li>
-<li><strong>Never auto-retrain.</strong> Human labels do not flow back into the system’s detection logic</li>
-<li><strong>Preserve AI reasoning alongside human decisions.</strong> If AI said “harmful” and human said “safe,” that discrepancy is visible</li>
+<li><strong>Store everything.</strong> Decision + AI reasoning + timestamps + reviewer ID</li>
+<li><strong>Never auto-retrain.</strong> Labels don’t flow back into detection logic</li>
+<li><strong>Preserve AI reasoning alongside human decisions.</strong> Discrepancies are visible</li>
 </ul>
-<p><strong>Why this is enough for now:</strong></p>
-<p>The problem statement says “blindly trusting labels can reinforce harmful patterns.” Our system <strong>doesn’t trust labels at all</strong> — it uses them for final post disposition only, not for learning.</p>
+<p><strong>Why this is enough:</strong></p>
+<p>Problem says “blindly trusting labels reinforces harm.” We <strong>don’t trust labels at all</strong> — used for post disposition only, not learning.</p>
 </div><div class="column" style="width:50%;">
 <p><strong>What we’d add with more time:</strong></p>
-<div class="cell" data-reveal="true" data-fig-width="5" data-layout-align="default">
+<div class="cell" data-reveal="true" data-fig-width="4.5" data-fig-height="3.5" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class=""><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart TD
-    A["Human Label\nSubmitted"] --&gt; B["Compare to\nAI Prediction"]
-    B --&gt; C{"Agreement?"}
-    C --&gt;|"Yes"| D["High confidence\nlabel"]
-    C --&gt;|"No"| E["Flag for\nsecond review"]
-    E --&gt; F["Track reviewer\ndisagreement rate"]
-    F --&gt; G{"Reviewer noise\n&gt; 30%?"}
-    G --&gt;|"Yes"| H["Reduce reviewer\ntrust weight"]
-    G --&gt;|"No"| I["Accept as\nlegitimate disagreement"]
+    A["Human Label"] --&gt; B["Compare to AI"]
+    B --&gt; C{"Agree?"}
+    C --&gt;|"Yes"| D["High confidence"]
+    C --&gt;|"No"| E["Flag for review"]
+    E --&gt; F{"Reviewer noise\n&gt; 30%?"}
+    F --&gt;|"Yes"| G["Reduce trust\nweight"]
+    F --&gt;|"No"| H["Legitimate\ndisagreement"]
 
     style E fill:#854d0e,stroke:#facc15,color:#fff
-    style H fill:#7f1d1d,stroke:#f87171,color:#f87171
+    style G fill:#7f1d1d,stroke:#f87171,color:#f87171
 </pre>
 </div>
 <p></p></figure><p></p>
 </div>
 </div>
 </div>
-<p><strong>Per-reviewer trust scoring.</strong> Track each reviewer’s agreement rate with AI. Reviewers who consistently disagree with high-confidence AI verdicts get flagged. This catches coordinated adversarial labeling.</p>
+<p><strong>Per-reviewer trust scoring</strong> catches coordinated adversarial labeling.</p>
 </div></div>
 </section>
 <section class="slide level2 smaller center">
-<h2>Design Reasoning: What We Chose NOT to Build</h2>
-<p><strong>Simplicity with strong reasoning is valued. Here’s what we deliberately left out.</strong></p>
+<h2>Reasoning: What We Chose NOT to Build</h2>
 <div class="columns">
 <div class="column" style="width:50%;">
 <p><strong>No ML training pipeline</strong></p>
 <ul>
-<li>Fine-tuning requires labeled data. Our labels have 15% noise</li>
-<li>Training costs exceed monthly budget</li>
-<li>A pre-trained LLM with good prompts outperforms a small fine-tuned model on nuanced tasks like context manipulation</li>
-<li><strong>Decision:</strong> Use Claude’s general reasoning ability + specific prompts</li>
+<li>Labels have 15% noise. Fine-tuning cost &gt; budget</li>
+<li>LLM + specific prompts outperforms small fine-tuned models on nuanced tasks</li>
 </ul>
 <p><strong>No image/video analysis</strong></p>
 <ul>
-<li>Problem statement focuses on text content and framing</li>
-<li>Image analysis (OCR, deepfake detection) adds cost and complexity</li>
-<li>Haiku’s vision capability exists but costs more per call</li>
-<li><strong>Decision:</strong> Text-only pipeline. Acknowledge gap in failure modes</li>
+<li>Problem focuses on text + framing</li>
+<li>Vision adds cost; text-only pipeline acknowledged as a gap</li>
 </ul>
-<p><strong>No real-time adversary fingerprinting</strong></p>
+<p><strong>No adversary fingerprinting</strong></p>
 <ul>
-<li>Tracking posting patterns (timing, accounts, networks) is powerful but requires significant infrastructure</li>
-<li>Rate limiting and user-level analysis need Redis, background workers, graph databases</li>
-<li><strong>Decision:</strong> Out of scope for budget. Acknowledge as future work</li>
+<li>Tracking posting patterns needs Redis, graph DBs</li>
+<li>Out of scope for budget</li>
 </ul>
 </div><div class="column" style="width:50%;">
-<p><strong>No Celery / Redis / message queue</strong></p>
+<p><strong>No Celery / Redis</strong></p>
 <ul>
-<li>FastAPI <code>BackgroundTasks</code> is simpler and sufficient</li>
-<li>No persistent queue means if server restarts, in-flight moderation is lost</li>
-<li><strong>Tradeoff:</strong> Simplicity over durability. For a demo, this is fine. For production, we’d add Redis</li>
+<li>FastAPI <code>BackgroundTasks</code> is sufficient for demo</li>
+<li><strong>Tradeoff:</strong> Server restart loses in-flight work</li>
 </ul>
 <p><strong>No confidence calibration</strong></p>
 <ul>
-<li>Claude returns confidence scores (0.0-1.0) but they’re not calibrated</li>
-<li>A “0.7 confidence” doesn’t mean 70% accuracy</li>
-<li><strong>Tradeoff:</strong> We use confidence for logging/display, not for hard decisions. Verdicts (safe/harmful/uncertain) drive logic, not scores</li>
+<li>Claude’s 0.7 confidence ≠ 70% accuracy</li>
+<li>Verdicts (safe/harmful/uncertain) drive logic, not scores</li>
 </ul>
 <p><strong>No A/B testing of prompts</strong></p>
 <ul>
-<li>We could run two prompts on the same content and compare</li>
-<li>2x cost per post. Not justified given budget headroom</li>
-<li><strong>Decision:</strong> Rely on decay mechanism to naturally rotate. Add A/B testing if detection quality drops</li>
+<li>2x cost per post, not justified</li>
+<li>Decay mechanism naturally rotates instead</li>
 </ul>
 </div></div>
 </section>
 <section class="slide level2 smaller center">
 <h2>The Tradeoff Map</h2>
-<p>Every design decision is a tradeoff. Here’s how they connect:</p>
-<div class="cell" data-reveal="true" data-fig-width="11" data-layout-align="default">
+<div class="cell" data-reveal="true" data-fig-width="10" data-fig-height="4" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class=""><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart TD
-    COST["💰 Lower Cost"] ---|"tension"| ACC["🎯 Higher Accuracy"]
-    ACC ---|"tension"| SPEED["⚡ Lower Latency"]
+    COST["💰 Cost"] ---|"tension"| ACC["🎯 Accuracy"]
+    ACC ---|"tension"| SPEED["⚡ Latency"]
     SPEED ---|"tension"| ADAPT["🔄 Adaptability"]
     ADAPT ---|"tension"| SIMPLE["📐 Simplicity"]
     SIMPLE ---|"tension"| COST
 
-    COST --&gt; D1["Haiku over Sonnet\nKeyword pre-filter\nSkip AI for safe content"]
-    ACC --&gt; D2["5 prompt variants\nStage 3 deep analysis\nHuman review for hardest"]
-    SPEED --&gt; D3["Async pipeline\nEarly exit on confidence\nBackground tasks"]
-    ADAPT --&gt; D4["Weighted decay\nPrompt rotation\nManual reset"]
-    SIMPLE --&gt; D5["3 stages, not 10\nNo ML training\nNo Redis"]
+    COST --&gt; D1["Haiku not Sonnet\nKeyword pre-filter"]
+    ACC --&gt; D2["5 prompt variants\nHuman review"]
+    SPEED --&gt; D3["Async pipeline\nEarly exits"]
+    ADAPT --&gt; D4["Weighted decay\nPrompt rotation"]
+    SIMPLE --&gt; D5["3 stages\nNo ML training"]
 
     style COST fill:#166534,stroke:#4ade80,color:#fff
     style ACC fill:#991b1b,stroke:#f87171,color:#fff
@@ -1057,32 +991,32 @@ Budget gone  → Stage 1 only (keywords + human)</code></pre>
 </div>
 </div>
 </div>
-<p><strong>Our position:</strong> We optimize for <strong>cost and adaptability</strong> first, accepting slightly lower accuracy on edge cases. We compensate with human review for the cases that matter most.</p>
+<p><strong>Our position:</strong> Optimize for <strong>cost and adaptability</strong> first, accept slightly lower accuracy on edge cases. Human review compensates for the hardest cases.</p>
 </section>
 <section class="slide level2 smaller center">
 <h2>Failure Modes</h2>
 <p>We declare three scenarios where the system <strong>will</strong> fail:</p>
 <div class="columns">
 <div class="column" style="width:33%;">
-<p><strong>1. Coordinated Novel Attack</strong></p>
-<p>A new manipulation tactic not covered by any prompt variant.</p>
-<p><em>Impact:</em> Harmful content passes through all 3 stages undetected.</p>
-<p><em>Containment:</em> Human reviewers catch patterns → new prompt variants added manually.</p>
+<p><strong>1. Novel Attack</strong></p>
+<p>New manipulation tactic not covered by any prompt variant.</p>
+<p><em>Impact:</em> Harmful content passes all 3 stages.</p>
+<p><em>Containment:</em> Humans catch patterns → new prompts added manually.</p>
 </div><div class="column" style="width:33%;">
-<p><strong>2. Budget Exhaustion Under Attack</strong></p>
-<p>Adversary floods system to burn through AI budget.</p>
-<p><em>Impact:</em> Falls back to keyword-only detection — many harmful posts slip through.</p>
-<p><em>Containment:</em> Rate limiting, keyword filter still catches obvious harm, escalation to humans continues.</p>
+<p><strong>2. Budget Exhaustion</strong></p>
+<p>Adversary floods system to burn AI budget.</p>
+<p><em>Impact:</em> Falls back to keyword-only detection.</p>
+<p><em>Containment:</em> Rate limiting + keywords still catch obvious harm.</p>
 </div><div class="column" style="width:33%;">
-<p><strong>3. Review Queue Saturation</strong></p>
+<p><strong>3. Queue Saturation</strong></p>
 <p>More than 20 ambiguous posts/hour during a crisis.</p>
-<p><em>Impact:</em> Escalated posts wait in queue — delayed moderation.</p>
-<p><em>Containment:</em> AI still provides reasoning, most harmful content caught in Stages 1-2. Queue overflow is visible on dashboard.</p>
+<p><em>Impact:</em> Escalated posts wait in queue.</p>
+<p><em>Containment:</em> AI provides reasoning, most harm caught in S1-S2.</p>
 </div></div>
 </section>
 <section class="slide level2 smaller center">
 <h2>Tech Stack</h2>
-<div class="cell" data-reveal="true" data-fig-width="11" data-layout-align="default">
+<div class="cell" data-reveal="true" data-fig-width="10" data-fig-height="3" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class=""><p></p>
@@ -1096,17 +1030,17 @@ Budget gone  → Stage 1 only (keywords + human)</code></pre>
     end
 
     subgraph Backend["⚙️ Backend — FastAPI"]
-        BE1["Routes Layer"]
-        BE2["Service Layer"]
+        BE1["Routes"]
+        BE2["Services"]
         BE3["Background Tasks"]
     end
 
     subgraph External["🔌 External"]
-        AI["Claude Haiku\n(Anthropic SDK)"]
-        DB[("PostgreSQL 16\n(SQLAlchemy async)")]
+        AI["Claude Haiku"]
+        DB[("PostgreSQL 16")]
     end
 
-    Frontend --&gt;|"HeyAPI SDK\n+ react-query"| BE1
+    Frontend --&gt;|"HeyAPI SDK"| BE1
     BE1 --&gt; BE2
     BE2 --&gt; BE3
     BE3 --&gt; AI
@@ -1122,43 +1056,7 @@ Budget gone  → Stage 1 only (keywords + human)</code></pre>
 </div>
 </div>
 <p><strong>Everything runs with:</strong> <code>make up</code> + <code>make dev-frontend</code></p>
-</section>
-<section class="slide level2 center">
-<h2>Live Dashboard</h2>
-<p><strong>4 pages for full operational visibility:</strong></p>
-<table class="caption-top">
-<colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Page</th>
-<th>Shows</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><strong>Dashboard</strong></td>
-<td>Stats cards, budget progress, content by status/language, recent activity</td>
-</tr>
-<tr class="even">
-<td><strong>Content Feed</strong></td>
-<td>Submit posts, view moderation results per stage, manual escalation</td>
-</tr>
-<tr class="odd">
-<td><strong>Review Queue</strong></td>
-<td>Pending items with AI reasoning, approve/reject, hourly budget counter</td>
-</tr>
-<tr class="even">
-<td><strong>System Health</strong></td>
-<td>Detection method decay bars, cost breakdown, reset controls</td>
-</tr>
-</tbody>
-</table>
-<div class="fragment">
-<p>All data refreshes every 5–10 seconds via react-query.</p>
-</div>
+<p>All pages use <strong><span class="citation" data-cites="tanstack/react-query">@tanstack/react-query</span></strong> with auto-generated SDK — data refreshes every 5-10 seconds.</p>
 </section>
 <section class="slide level2 center">
 <h2>Why This Works</h2>
@@ -1166,9 +1064,9 @@ Budget gone  → Stage 1 only (keywords + human)</code></pre>
 <li class="fragment"><strong>Simple reasoning over complex engineering</strong> — 3 clear stages, not a black box</li>
 <li class="fragment"><strong>Adaptive by design</strong> — prompt rotation + decay prevents adversary learning</li>
 <li class="fragment"><strong>Cost-efficient</strong> — $14/mo of $175 budget, with graceful degradation</li>
-<li class="fragment"><strong>Honest about failure</strong> — declared failure modes with containment strategies</li>
+<li class="fragment"><strong>Honest about failure</strong> — declared failure modes with containment</li>
 <li class="fragment"><strong>Context over classification</strong> — detects manipulation, not just keywords</li>
-<li class="fragment"><strong>Human-in-the-loop, not human-dependent</strong> — 20/hr budget used only when needed</li>
+<li class="fragment"><strong>Human-in-the-loop, not human-dependent</strong> — 20/hr used only when needed</li>
 </ol>
 </section>
 <section class="slide level2 center">

@@ -7,15 +7,21 @@ $selection-bg: #7c3aed;
 
 $font-family-sans-serif: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
 $font-family-monospace: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
-$presentation-font-size-root: 36px;
+$presentation-font-size-root: 30px;
 $presentation-heading-color: #f4f4f5;
-$presentation-h2-font-size: 1.4em;
+$presentation-h2-font-size: 1.3em;
 
 /*-- scss:rules --*/
 
 .reveal {
   .slide-background {
     background: linear-gradient(135deg, #0a0a0f 0%, #1a0a2e 50%, #0f0a1a 100%);
+  }
+
+  // Prevent any slide content from overflowing
+  .slides section {
+    overflow: hidden;
+    box-sizing: border-box;
   }
 
   h1, h2, h3 {
@@ -26,31 +32,36 @@ $presentation-h2-font-size: 1.4em;
 
   h2 {
     border-bottom: 2px solid #7c3aed;
-    padding-bottom: 0.3em;
-    margin-bottom: 0.8em;
+    padding-bottom: 0.2em;
+    margin-bottom: 0.5em;
+  }
+
+  // Tighter paragraph spacing
+  p {
+    margin: 0.3em 0;
   }
 
   table {
-    font-size: 0.65em;
-    margin: 0.5em auto;
+    font-size: 0.6em;
+    margin: 0.3em auto;
 
     th {
       background: #1e1b4b;
       color: #c4b5fd;
       border-bottom: 2px solid #7c3aed;
-      padding: 0.5em 0.8em;
+      padding: 0.3em 0.6em;
     }
 
     td {
       border-bottom: 1px solid #27272a;
-      padding: 0.4em 0.8em;
+      padding: 0.25em 0.6em;
     }
   }
 
   code {
     color: #a78bfa;
     background: #1e1b4b;
-    padding: 0.1em 0.3em;
+    padding: 0.05em 0.25em;
     border-radius: 4px;
     font-size: 0.85em;
   }
@@ -60,34 +71,53 @@ $presentation-h2-font-size: 1.4em;
     border: 1px solid #27272a;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    padding: 0.8em;
-    font-size: 0.55em;
+    padding: 0.5em;
+    font-size: 0.5em;
+    margin: 0.3em 0;
   }
 
   blockquote {
     background: linear-gradient(90deg, #7c3aed22, transparent);
     border-left: 4px solid #7c3aed;
-    padding: 0.6em 1em;
-    margin: 0.8em 0;
+    padding: 0.4em 0.8em;
+    margin: 0.4em 0;
     font-style: italic;
     color: #d4d4d8;
-    font-size: 0.85em;
+    font-size: 0.8em;
   }
 
   .columns {
-    gap: 2em;
+    gap: 1.2em;
   }
 
   ul, ol {
-    font-size: 0.78em;
+    font-size: 0.72em;
+    margin: 0.2em 0;
   }
 
   li {
-    margin-bottom: 0.3em;
+    margin-bottom: 0.15em;
+    line-height: 1.35;
+  }
+
+  // Nested lists tighter
+  li ul, li ol {
+    margin: 0.1em 0;
+    font-size: 0.95em;
   }
 
   strong {
     color: #c4b5fd;
+  }
+
+  // Mermaid diagrams: constrain to slide area
+  .mermaid {
+    max-height: 480px;
+    overflow: hidden;
+  }
+
+  .cell-output-display {
+    margin: 0.2em 0;
   }
 
   .footer {
@@ -98,5 +128,12 @@ $presentation-h2-font-size: 1.4em;
   .slide-number {
     color: #71717a;
     font-size: 0.5em;
+  }
+
+  // Extra-small text utility for very dense slides
+  .xsmall {
+    font-size: 0.65em;
+    ul, ol { font-size: 0.95em; }
+    p { font-size: 0.95em; }
   }
 }
