@@ -1,0 +1,108 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hackathon}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hackathon}
+      POSTGRES_DB: ${POSTGRES_DB:-hackathon}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hackathon}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-hackathon}:${POSTGRES_PASSWORD:-hackathon}@db:5432/${POSTGRES_DB:-hackathon}
+      - SECRET_KEY=${SECRET_KEY:-super-secret-change-me-in-production}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - CORS_ORIGINS=http://localhost:3000
+      - ENVIRONMENT=development
+      # - REDIS_URL=redis://redis:6379/0
+      # - MINIO_ENDPOINT=minio:9000
+      # - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
+      # - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
+      # - MINIO_BUCKET=${MINIO_BUCKET:-uploads}
+      # - MINIO_SECURE=false
+      # - CELERY_BROKER_URL=redis://redis:6379/1
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "
+      uv run alembic upgrade head &&
+      uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+
+  # ──────────────────────────────────────────────
+  # Uncomment below services as needed
+  # ──────────────────────────────────────────────
+
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "${REDIS_PORT:-6379}:6379"
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 5s
+  #     timeout: 3s
+  #     retries: 5
+
+  # minio:
+  #   image: minio/minio:latest
+  #   command: server /data --console-address ":9001"
+  #   environment:
+  #     MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+  #     MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+  #   ports:
+  #     - "${MINIO_API_PORT:-9000}:9000"
+  #     - "${MINIO_CONSOLE_PORT:-9001}:9001"
+  #   volumes:
+  #     - minio_data:/data
+  #   healthcheck:
+  #     test: ["CMD", "mc", "ready", "local"]
+  #     interval: 5s
+  #     timeout: 3s
+  #     retries: 5
+
+  # minio-init:
+  #   image: minio/mc:latest
+  #   depends_on:
+  #     minio:
+  #       condition: service_healthy
+  #   entrypoint: >
+  #     /bin/sh -c "
+  #     mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin};
+  #     mc mb local/${MINIO_BUCKET:-uploads} --ignore-existing;
+  #     mc anonymous set download local/${MINIO_BUCKET:-uploads}/public;
+  #     exit 0;
+  #     "
+
+  # celery-worker:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-hackathon}:${POSTGRES_PASSWORD:-hackathon}@db:5432/${POSTGRES_DB:-hackathon}
+  #     - REDIS_URL=redis://redis:6379/0
+  #     - CELERY_BROKER_URL=redis://redis:6379/1
+  #     - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   command: uv run celery -A app.worker.celery_app worker --loglevel=info
+
+volumes:
+  postgres_data:
+  # minio_data:

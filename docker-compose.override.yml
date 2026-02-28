@@ -1,0 +1,10 @@
+services:
+  backend:
+    volumes:
+      - ./backend:/app
+      - /app/.venv
+
+  # celery-worker:
+  #   volumes:
+  #     - ./backend:/app
+  #     - /app/.venv
