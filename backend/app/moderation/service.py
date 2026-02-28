@@ -37,16 +37,16 @@ def _parse_claude_response(text: str) -> dict:
         return json.loads(text)
     except json.JSONDecodeError:
         # Try extracting JSON from markdown code block
-        match = re.search(r"\{[^{}]*\}", text, re.DOTALL)
+        match = re.search(r"\{.*\}", text, re.DOTALL)
         if match:
             try:
                 return json.loads(match.group())
             except json.JSONDecodeError:
                 pass
-    return {"verdict": "uncertain", "confidence": 0.0, "reasoning": "Failed to parse AI response"}
+    return {"verdict": "uncertain", "confidence": 0.0, "reasoning": "Failed to parse AI response", "manipulation_tactics": []}
 
 
-async def _call_claude(prompt: str, model: str = "claude-haiku-4-5-20241022") -> tuple[str, float]:
+async def _call_claude(prompt: str, model: str = "claude-3-haiku-20240307") -> tuple[str, float]:
     """Call Claude API. Returns (response_text, estimated_cost_usd)."""
     client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
     message = await client.messages.create(
@@ -128,6 +128,7 @@ async def _run_stage_2(db: AsyncSession, post: Post) -> ModerationResult:
         confidence=parsed.get("confidence", 0.0),
         reasoning=parsed.get("reasoning", ""),
         cost_usd=cost,
+        manipulation_tactics=parsed.get("manipulation_tactics") or None,
     )
     db.add(result)
     await db.commit()
@@ -178,6 +179,7 @@ async def _run_stage_3(db: AsyncSession, post: Post, previous_reasoning: str) ->
         confidence=parsed.get("confidence", 0.0),
         reasoning=parsed.get("reasoning", ""),
         cost_usd=cost,
+        manipulation_tactics=parsed.get("manipulation_tactics") or None,
     )
     db.add(result)
     await db.commit()

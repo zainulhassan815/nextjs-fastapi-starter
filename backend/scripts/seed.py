@@ -28,9 +28,19 @@ DETECTION_METHODS = [
         "description": "Narrative detector — identifies harmful narratives, misinformation, and hate speech patterns",
     },
     {
+        "name": "framing_analyzer_v1",
+        "stage": 2,
+        "description": "Framing analyzer — detects headline misrepresentation, loaded language, implied causation, and excluded viewpoints",
+    },
+    {
+        "name": "selective_presentation_v1",
+        "stage": 2,
+        "description": "Selective presentation detector — identifies missing context, stats without base rates, partial quotes, and one-sided presentation",
+    },
+    {
         "name": "detailed_analysis",
         "stage": 3,
-        "description": "Full detailed analysis — thorough review with cultural context and nuance consideration",
+        "description": "Full detailed analysis — thorough review with cultural context, nuance, and contextual manipulation detection",
     },
 ]
 
@@ -46,6 +56,15 @@ SAMPLE_POSTS = [
     # Ambiguous content that should reach Stage 2/3
     {"content": "This new government policy is absolutely destroying our economy. They want to attack the middle class and kill small businesses!", "language": "english"},
     {"content": "Yaar yeh sab log pagal hain, bomb blast jaise news sun ke dar lagta hai", "language": "roman_urdu"},
+    # Contextually misleading posts — factually correct but manipulative
+    {"content": "EXPOSED: 1 in 10,000 people who took the vaccine reported severe side effects. The government is hiding these numbers from the public. Share before they delete this!", "language": "english"},
+    {"content": "Crime rates in District X are 40% higher than the national average. Official police statistics. What they don't want you to know about who lives there.", "language": "english"},
+    {"content": "آٹے کی قیمت میں 20 فیصد اضافہ ہوا ہے۔ یہ حکومت عوام کو لوٹ رہی ہے۔ ایک روٹی 50 روپے کی ہو گئی۔ بس اتنا سمجھ لیں یہ چور ہیں۔", "language": "urdu"},
+    {"content": "Government ne pichle saal 500 crore sirf travel pe kharch kiye. Itne mein 100 hospitals ban sakte the. Sochiye yeh paisa kahan ja raha hai.", "language": "roman_urdu"},
+    {"content": "Studies show Pakistan's literacy rate is only 58%. This proves the entire education system has completely failed. The country has no future until we tear it all down and start over.", "language": "english"},
+    {"content": "بے روزگاری کی شرح 30 فیصد تک پہنچ گئی ہے۔ نوجوانوں کا کوئی مستقبل نہیں۔ ملک تباہی کے دہانے پر ہے۔", "language": "urdu"},
+    {"content": "Mere cousin hospital gaya tha, wahan 3 log mar gaye ek din mein. Yeh hospitals log marne ke liye bhejte hain. Koi doctor pe bharosa mat karo.", "language": "roman_urdu"},
+    {"content": "India's GDP is 10x Pakistan's. At this rate Pakistan will cease to exist as a nation in 20 years. These are just facts, look it up.", "language": "english"},
 ]
 
 

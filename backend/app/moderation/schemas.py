@@ -12,6 +12,7 @@ class ModerationResultResponse(BaseModel):
     confidence: float = Field(..., description="Confidence score 0-1", examples=[0.95])
     reasoning: str | None = Field(None, description="Explanation of the verdict")
     cost_usd: float = Field(..., description="Cost of this analysis in USD", examples=[0.0002])
+    manipulation_tactics: list[str] | None = Field(None, description="Specific manipulation tactics detected", examples=[["cherry_picked_stats", "emotional_framing"]])
     created_at: datetime = Field(..., description="When this result was created")
 
     model_config = {"from_attributes": True}

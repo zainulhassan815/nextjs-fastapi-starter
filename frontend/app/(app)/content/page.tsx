@@ -128,6 +128,7 @@ function ModerationDetails({
                 <th className="px-3 py-2">Method</th>
                 <th className="px-3 py-2">Verdict</th>
                 <th className="px-3 py-2">Confidence</th>
+                <th className="px-3 py-2">Tactics</th>
                 <th className="px-3 py-2">Reasoning</th>
               </tr>
             </thead>
@@ -148,6 +149,19 @@ function ModerationDetails({
                   </td>
                   <td className="px-3 py-2">
                     {(result.confidence * 100).toFixed(1)}%
+                  </td>
+                  <td className="px-3 py-2">
+                    {result.manipulation_tactics && result.manipulation_tactics.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {result.manipulation_tactics.map((tactic) => (
+                          <Badge key={tactic} variant="destructive" className="text-[10px]">
+                            {tactic.replace(/_/g, " ")}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">-</span>
+                    )}
                   </td>
                   <td className="max-w-xs px-3 py-2 text-xs text-gray-600">
                     {result.reasoning ?? "-"}
