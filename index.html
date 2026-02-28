@@ -993,25 +993,229 @@ Budget gone  → S1 only (keywords + human)</code></pre>
 </div>
 <p><strong>Our position:</strong> Optimize for <strong>cost and adaptability</strong> first, accept slightly lower accuracy on edge cases. Human review compensates for the hardest cases.</p>
 </section>
-<section class="slide level2 smaller center">
+<section class="slide level2 center">
 <h2>Failure Modes</h2>
-<p>We declare three scenarios where the system <strong>will</strong> fail:</p>
+<p>We declare <strong>three scenarios</strong> where the system <strong>will</strong> fail.</p>
+<p>No system is perfect — we are evaluated on <strong>honesty about limitations</strong> and <strong>how damage is contained</strong>.</p>
+<ol type="1">
+<li class="fragment"><strong>Coordinated Novel Attack</strong> — a manipulation tactic we’ve never seen</li>
+<li class="fragment"><strong>Budget Exhaustion Under Attack</strong> — adversary burns our AI budget</li>
+<li class="fragment"><strong>Review Queue Saturation</strong> — more escalations than humans can handle</li>
+</ol>
+</section>
+<section class="slide level2 smaller center">
+<h2>Failure 1: Coordinated Novel Attack</h2>
 <div class="columns">
-<div class="column" style="width:33%;">
-<p><strong>1. Novel Attack</strong></p>
-<p>New manipulation tactic not covered by any prompt variant.</p>
-<p><em>Impact:</em> Harmful content passes all 3 stages.</p>
-<p><em>Containment:</em> Humans catch patterns → new prompts added manually.</p>
-</div><div class="column" style="width:33%;">
-<p><strong>2. Budget Exhaustion</strong></p>
-<p>Adversary floods system to burn AI budget.</p>
-<p><em>Impact:</em> Falls back to keyword-only detection.</p>
-<p><em>Containment:</em> Rate limiting + keywords still catch obvious harm.</p>
-</div><div class="column" style="width:33%;">
-<p><strong>3. Queue Saturation</strong></p>
-<p>More than 20 ambiguous posts/hour during a crisis.</p>
-<p><em>Impact:</em> Escalated posts wait in queue.</p>
-<p><em>Containment:</em> AI provides reasoning, most harm caught in S1-S2.</p>
+<div class="column" style="width:50%;">
+<div class="cell" data-reveal="true" data-fig-width="5" data-fig-height="3.5" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class=""><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    A["Adversary invents\nnew tactic"] --&gt; B["Stage 1: No keywords\n→ passes"]
+    B --&gt; C["Stage 2: Prompt doesn't\ncover this tactic → safe"]
+    C --&gt; D["Stage 3: Not triggered\nor also misses"]
+    D --&gt; E["🚫 Harmful content\nreaches users"]
+
+    style A fill:#7f1d1d,stroke:#f87171,color:#fff
+    style E fill:#7f1d1d,stroke:#f87171,color:#f87171
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</div><div class="column" style="width:50%;">
+<p><strong>What happens:</strong></p>
+<p>A new manipulation technique (e.g.&nbsp;sarcasm-based radicalization, meme-text hybrid) that none of our 5 prompt variants are designed to detect.</p>
+<p><strong>Impact:</strong> Harmful content passes all 3 stages undetected. Users are exposed until the gap is noticed.</p>
+<p><strong>How we detect it:</strong> Human reviewers and user reports surface patterns that AI missed. Dashboard shows sudden drop in “harmful” verdicts — a signal that something is slipping through.</p>
+</div></div>
+</section>
+<section class="slide level2 smaller center">
+<h2>Overcoming Failure 1</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="cell" data-reveal="true" data-fig-width="5" data-fig-height="3.5" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class=""><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    A["Novel tactic\ndetected by humans"] --&gt; B["Analyze pattern\nof missed content"]
+    B --&gt; C["Write new\nprompt variant"]
+    C --&gt; D["Add to method pool\nfresh decay = 1.0"]
+    D --&gt; E["Weighted selection\nnow includes it"]
+    E --&gt; F["✅ Gap closed"]
+
+    style A fill:#854d0e,stroke:#facc15,color:#fff
+    style C fill:#1e1b4b,stroke:#7c3aed,color:#fff
+    style F fill:#14532d,stroke:#4ade80,color:#4ade80
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</div><div class="column" style="width:50%;">
+<p><strong>Short-term containment:</strong></p>
+<ul>
+<li>Human reviewers catch novel patterns during normal queue work</li>
+<li>Manual escalation button lets moderators flag suspicious “safe” content</li>
+<li>User reports surface content the pipeline missed</li>
+</ul>
+<p><strong>Long-term fix:</strong></p>
+<ul>
+<li>Write a <strong>new prompt variant</strong> targeting the novel tactic</li>
+<li>Add it to <code>detection_methods</code> table with <code>decay_factor = 1.0</code></li>
+<li>Fresh method gets <strong>high selection weight</strong> immediately</li>
+<li>Existing methods are not disrupted — pool simply grows</li>
+</ul>
+<p><strong>Why this works:</strong> The system is designed for <strong>prompt extensibility</strong>. Adding a 6th or 7th variant requires no code changes — just a database insert and a new prompt template.</p>
+</div></div>
+</section>
+<section class="slide level2 smaller center">
+<h2>Failure 2: Budget Exhaustion Under Attack</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="cell" data-reveal="true" data-fig-width="5" data-fig-height="3.5" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class=""><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    A["Adversary floods\nplatform with posts"] --&gt; B["Every post triggers\nStage 2 + 3"]
+    B --&gt; C["AI budget burns\nthrough $175"]
+    C --&gt; D["Budget gate\nblocks Claude calls"]
+    D --&gt; E["⚠️ Only Stage 1\nkeyword detection"]
+
+    style A fill:#7f1d1d,stroke:#f87171,color:#fff
+    style D fill:#854d0e,stroke:#facc15,color:#fff
+    style E fill:#854d0e,stroke:#facc15,color:#fff
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</div><div class="column" style="width:50%;">
+<p><strong>What happens:</strong></p>
+<p>Adversary submits thousands of posts designed to trigger Stage 2 (1-2 keyword hits each). Each call costs ~$0.0002. At 875K calls the budget is gone.</p>
+<p><strong>Impact:</strong> System falls back to keyword-only mode. Contextual manipulation (the hardest content) goes undetected. Only obvious keyword-heavy harm is caught.</p>
+<p><strong>How we detect it:</strong> Budget dashboard shows spend spiking. <code>budget_utilization_pct</code> jumps from normal 8% toward 100%. Alert is visible in System Health page.</p>
+</div></div>
+</section>
+<section class="slide level2 smaller center">
+<h2>Overcoming Failure 2</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="cell" data-reveal="true" data-fig-width="5" data-fig-height="3.5" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class=""><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    A["Spike detected"] --&gt; B["Per-user rate limit\ne.g. 10 posts/hour"]
+    B --&gt; C["Suspicious accounts\nget keyword-only mode"]
+    C --&gt; D["Budget preserved\nfor legitimate content"]
+    D --&gt; E["✅ AI pipeline\nstays operational"]
+
+    style A fill:#854d0e,stroke:#facc15,color:#fff
+    style B fill:#1e1b4b,stroke:#7c3aed,color:#fff
+    style E fill:#14532d,stroke:#4ade80,color:#4ade80
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</div><div class="column" style="width:50%;">
+<p><strong>Short-term containment:</strong></p>
+<ul>
+<li><strong>Budget gate already exists</strong> — Stage 2/3 skip gracefully when budget is exhausted</li>
+<li>Keywords still catch obvious harm (free, unlimited)</li>
+<li>Human escalation still works (posts marked “uncertain” go to queue)</li>
+<li>System <strong>never fully stops</strong> — it degrades</li>
+</ul>
+<p><strong>Long-term fix:</strong></p>
+<ul>
+<li><strong>Per-user rate limiting</strong> — cap posts/hour per account. Flood attacks require many accounts</li>
+<li><strong>Tiered AI usage</strong> — new/low-trust accounts get keyword-only. Established accounts get full pipeline</li>
+<li><strong>Adaptive budget allocation</strong> — reserve 20% of budget as emergency buffer, only used for high-signal content</li>
+<li><strong>Cost-aware routing</strong> — if budget is at 80%, skip Stage 3 and escalate uncertain Stage 2 content directly to humans</li>
+</ul>
+</div></div>
+</section>
+<section class="slide level2 smaller center">
+<h2>Failure 3: Review Queue Saturation</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="cell" data-reveal="true" data-fig-width="5" data-fig-height="3.5" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class=""><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    A["Crisis event\nambiguous content surge"] --&gt; B["Stage 3 escalates\n50+ posts/hour"]
+    B --&gt; C["Only 20 reviews/hour\navailable"]
+    C --&gt; D["30+ posts stuck\nin queue"]
+    D --&gt; E["⏳ Delayed moderation\nharmful content lingers"]
+
+    style A fill:#7f1d1d,stroke:#f87171,color:#fff
+    style D fill:#854d0e,stroke:#facc15,color:#fff
+    style E fill:#854d0e,stroke:#facc15,color:#fff
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</div><div class="column" style="width:50%;">
+<p><strong>What happens:</strong></p>
+<p>A real-world crisis (election, natural disaster, conflict) generates a surge of ambiguous, context-dependent content. AI can’t confidently classify it → mass escalation to humans.</p>
+<p><strong>Impact:</strong> Posts queue up beyond 20/hour capacity. Harmful content stays visible while waiting for review. Moderation is delayed by hours during the most critical period.</p>
+<p><strong>How we detect it:</strong> Review queue length grows visibly on dashboard. <code>remaining</code> in budget endpoint drops to 0. HTTP 429 responses increase.</p>
+</div></div>
+</section>
+<section class="slide level2 smaller center">
+<h2>Overcoming Failure 3</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="cell" data-reveal="true" data-fig-width="5" data-fig-height="3.5" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class=""><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    A["Queue overflow\ndetected"] --&gt; B["Auto-hold: uncertain\ncontent hidden until reviewed"]
+    B --&gt; C["Priority scoring:\nhigh-reach posts first"]
+    C --&gt; D["Emergency mode:\ntemporary budget increase"]
+    D --&gt; E["✅ Highest-risk content\nreviewed first"]
+
+    style A fill:#854d0e,stroke:#facc15,color:#fff
+    style B fill:#1e1b4b,stroke:#7c3aed,color:#fff
+    style E fill:#14532d,stroke:#4ade80,color:#4ade80
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</div><div class="column" style="width:50%;">
+<p><strong>Short-term containment:</strong></p>
+<ul>
+<li>AI reasoning is <strong>already attached</strong> to every queued post — moderators can work faster with context</li>
+<li>Most harmful content is caught in Stage 1-2 before reaching the queue</li>
+<li>Queue overflow is <strong>visible on dashboard</strong> — operators can respond</li>
+</ul>
+<p><strong>Long-term fix:</strong></p>
+<ul>
+<li><strong>Auto-hold policy</strong> — during crisis, uncertain content is hidden from the feed until reviewed (safe default)</li>
+<li><strong>Priority scoring</strong> — rank queue by content reach (followers, shares). High-reach posts reviewed first</li>
+<li><strong>Emergency budget increase</strong> — temporarily raise 20/hr cap during declared crises with additional moderators</li>
+<li><strong>Confidence-based auto-action</strong> — if Stage 3 confidence &gt; 0.9, auto-act instead of escalating. Only truly ambiguous cases (confidence 0.4-0.7) reach humans</li>
+</ul>
 </div></div>
 </section>
 <section class="slide level2 smaller center">

@@ -18,6 +18,7 @@ format:
     logo: ""
     width: 1280
     height: 720
+    output-file: index.html
 ---
 
 ## The Problem {.center}
@@ -779,39 +780,237 @@ flowchart TD
 
 ---
 
-## Failure Modes {.smaller}
+## Failure Modes {.center}
 
-We declare three scenarios where the system **will** fail:
+We declare **three scenarios** where the system **will** fail.
+
+No system is perfect — we are evaluated on **honesty about limitations** and **how damage is contained**.
+
+::: {.incremental}
+1. **Coordinated Novel Attack** — a manipulation tactic we've never seen
+2. **Budget Exhaustion Under Attack** — adversary burns our AI budget
+3. **Review Queue Saturation** — more escalations than humans can handle
+:::
+
+---
+
+## Failure 1: Coordinated Novel Attack {.smaller}
 
 :::: {.columns}
-::: {.column width="33%"}
-**1. Novel Attack**
+::: {.column width="50%"}
 
-New manipulation tactic not covered by any prompt variant.
+```{mermaid}
+%%| fig-width: 5
+%%| fig-height: 3.5
+flowchart TD
+    A["Adversary invents\nnew tactic"] --> B["Stage 1: No keywords\n→ passes"]
+    B --> C["Stage 2: Prompt doesn't\ncover this tactic → safe"]
+    C --> D["Stage 3: Not triggered\nor also misses"]
+    D --> E["🚫 Harmful content\nreaches users"]
 
-*Impact:* Harmful content passes all 3 stages.
+    style A fill:#7f1d1d,stroke:#f87171,color:#fff
+    style E fill:#7f1d1d,stroke:#f87171,color:#f87171
+```
 
-*Containment:* Humans catch patterns → new prompts added manually.
 :::
 
-::: {.column width="33%"}
-**2. Budget Exhaustion**
+::: {.column width="50%"}
+**What happens:**
 
-Adversary floods system to burn AI budget.
+A new manipulation technique (e.g. sarcasm-based radicalization, meme-text hybrid) that none of our 5 prompt variants are designed to detect.
 
-*Impact:* Falls back to keyword-only detection.
+**Impact:** Harmful content passes all 3 stages undetected. Users are exposed until the gap is noticed.
 
-*Containment:* Rate limiting + keywords still catch obvious harm.
+**How we detect it:** Human reviewers and user reports surface patterns that AI missed. Dashboard shows sudden drop in "harmful" verdicts — a signal that something is slipping through.
+:::
+::::
+
+---
+
+## Overcoming Failure 1 {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+
+```{mermaid}
+%%| fig-width: 5
+%%| fig-height: 3.5
+flowchart TD
+    A["Novel tactic\ndetected by humans"] --> B["Analyze pattern\nof missed content"]
+    B --> C["Write new\nprompt variant"]
+    C --> D["Add to method pool\nfresh decay = 1.0"]
+    D --> E["Weighted selection\nnow includes it"]
+    E --> F["✅ Gap closed"]
+
+    style A fill:#854d0e,stroke:#facc15,color:#fff
+    style C fill:#1e1b4b,stroke:#7c3aed,color:#fff
+    style F fill:#14532d,stroke:#4ade80,color:#4ade80
+```
+
 :::
 
-::: {.column width="33%"}
-**3. Queue Saturation**
+::: {.column width="50%"}
+**Short-term containment:**
 
-More than 20 ambiguous posts/hour during a crisis.
+- Human reviewers catch novel patterns during normal queue work
+- Manual escalation button lets moderators flag suspicious "safe" content
+- User reports surface content the pipeline missed
 
-*Impact:* Escalated posts wait in queue.
+**Long-term fix:**
 
-*Containment:* AI provides reasoning, most harm caught in S1-S2.
+- Write a **new prompt variant** targeting the novel tactic
+- Add it to `detection_methods` table with `decay_factor = 1.0`
+- Fresh method gets **high selection weight** immediately
+- Existing methods are not disrupted — pool simply grows
+
+**Why this works:** The system is designed for **prompt extensibility**. Adding a 6th or 7th variant requires no code changes — just a database insert and a new prompt template.
+:::
+::::
+
+---
+
+## Failure 2: Budget Exhaustion Under Attack {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+
+```{mermaid}
+%%| fig-width: 5
+%%| fig-height: 3.5
+flowchart TD
+    A["Adversary floods\nplatform with posts"] --> B["Every post triggers\nStage 2 + 3"]
+    B --> C["AI budget burns\nthrough $175"]
+    C --> D["Budget gate\nblocks Claude calls"]
+    D --> E["⚠️ Only Stage 1\nkeyword detection"]
+
+    style A fill:#7f1d1d,stroke:#f87171,color:#fff
+    style D fill:#854d0e,stroke:#facc15,color:#fff
+    style E fill:#854d0e,stroke:#facc15,color:#fff
+```
+
+:::
+
+::: {.column width="50%"}
+**What happens:**
+
+Adversary submits thousands of posts designed to trigger Stage 2 (1-2 keyword hits each). Each call costs ~$0.0002. At 875K calls the budget is gone.
+
+**Impact:** System falls back to keyword-only mode. Contextual manipulation (the hardest content) goes undetected. Only obvious keyword-heavy harm is caught.
+
+**How we detect it:** Budget dashboard shows spend spiking. `budget_utilization_pct` jumps from normal 8% toward 100%. Alert is visible in System Health page.
+:::
+::::
+
+---
+
+## Overcoming Failure 2 {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+
+```{mermaid}
+%%| fig-width: 5
+%%| fig-height: 3.5
+flowchart TD
+    A["Spike detected"] --> B["Per-user rate limit\ne.g. 10 posts/hour"]
+    B --> C["Suspicious accounts\nget keyword-only mode"]
+    C --> D["Budget preserved\nfor legitimate content"]
+    D --> E["✅ AI pipeline\nstays operational"]
+
+    style A fill:#854d0e,stroke:#facc15,color:#fff
+    style B fill:#1e1b4b,stroke:#7c3aed,color:#fff
+    style E fill:#14532d,stroke:#4ade80,color:#4ade80
+```
+
+:::
+
+::: {.column width="50%"}
+**Short-term containment:**
+
+- **Budget gate already exists** — Stage 2/3 skip gracefully when budget is exhausted
+- Keywords still catch obvious harm (free, unlimited)
+- Human escalation still works (posts marked "uncertain" go to queue)
+- System **never fully stops** — it degrades
+
+**Long-term fix:**
+
+- **Per-user rate limiting** — cap posts/hour per account. Flood attacks require many accounts
+- **Tiered AI usage** — new/low-trust accounts get keyword-only. Established accounts get full pipeline
+- **Adaptive budget allocation** — reserve 20% of budget as emergency buffer, only used for high-signal content
+- **Cost-aware routing** — if budget is at 80%, skip Stage 3 and escalate uncertain Stage 2 content directly to humans
+:::
+::::
+
+---
+
+## Failure 3: Review Queue Saturation {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+
+```{mermaid}
+%%| fig-width: 5
+%%| fig-height: 3.5
+flowchart TD
+    A["Crisis event\nambiguous content surge"] --> B["Stage 3 escalates\n50+ posts/hour"]
+    B --> C["Only 20 reviews/hour\navailable"]
+    C --> D["30+ posts stuck\nin queue"]
+    D --> E["⏳ Delayed moderation\nharmful content lingers"]
+
+    style A fill:#7f1d1d,stroke:#f87171,color:#fff
+    style D fill:#854d0e,stroke:#facc15,color:#fff
+    style E fill:#854d0e,stroke:#facc15,color:#fff
+```
+
+:::
+
+::: {.column width="50%"}
+**What happens:**
+
+A real-world crisis (election, natural disaster, conflict) generates a surge of ambiguous, context-dependent content. AI can't confidently classify it → mass escalation to humans.
+
+**Impact:** Posts queue up beyond 20/hour capacity. Harmful content stays visible while waiting for review. Moderation is delayed by hours during the most critical period.
+
+**How we detect it:** Review queue length grows visibly on dashboard. `remaining` in budget endpoint drops to 0. HTTP 429 responses increase.
+:::
+::::
+
+---
+
+## Overcoming Failure 3 {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+
+```{mermaid}
+%%| fig-width: 5
+%%| fig-height: 3.5
+flowchart TD
+    A["Queue overflow\ndetected"] --> B["Auto-hold: uncertain\ncontent hidden until reviewed"]
+    B --> C["Priority scoring:\nhigh-reach posts first"]
+    C --> D["Emergency mode:\ntemporary budget increase"]
+    D --> E["✅ Highest-risk content\nreviewed first"]
+
+    style A fill:#854d0e,stroke:#facc15,color:#fff
+    style B fill:#1e1b4b,stroke:#7c3aed,color:#fff
+    style E fill:#14532d,stroke:#4ade80,color:#4ade80
+```
+
+:::
+
+::: {.column width="50%"}
+**Short-term containment:**
+
+- AI reasoning is **already attached** to every queued post — moderators can work faster with context
+- Most harmful content is caught in Stage 1-2 before reaching the queue
+- Queue overflow is **visible on dashboard** — operators can respond
+
+**Long-term fix:**
+
+- **Auto-hold policy** — during crisis, uncertain content is hidden from the feed until reviewed (safe default)
+- **Priority scoring** — rank queue by content reach (followers, shares). High-reach posts reviewed first
+- **Emergency budget increase** — temporarily raise 20/hr cap during declared crises with additional moderators
+- **Confidence-based auto-action** — if Stage 3 confidence > 0.9, auto-act instead of escalating. Only truly ambiguous cases (confidence 0.4-0.7) reach humans
 :::
 ::::
 
