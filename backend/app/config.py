@@ -1,3 +1,4 @@
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,6 +12,15 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = "postgresql+asyncpg://hackathon:hackathon@localhost:5432/hackathon"
+
+    @model_validator(mode="after")
+    def normalize_database_url(self) -> "Settings":
+        """Railway provides postgresql:// but we need postgresql+asyncpg://."""
+        if self.database_url.startswith("postgresql://"):
+            self.database_url = self.database_url.replace(
+                "postgresql://", "postgresql+asyncpg://", 1
+            )
+        return self
 
     @property
     def sync_database_url(self) -> str:
