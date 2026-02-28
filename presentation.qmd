@@ -1,0 +1,957 @@
+---
+title: "Mind-Flayer Patch v2"
+subtitle: "Adaptive Content Moderation Under Adversarial Constraints"
+author: "Stranger Syntax"
+format:
+  revealjs:
+    theme: [dark, custom.scss]
+    transition: slide
+    slide-number: true
+    hash-type: number
+    center: true
+    code-line-numbers: false
+    highlight-style: monokai
+    mermaid:
+      theme: dark
+    footer: "Stranger Syntax — BNU Hackathon 2025"
+    logo: ""
+    width: 1280
+    height: 720
+---
+
+## The Problem {.center}
+
+::: {.incremental}
+- A large-scale platform is under attack
+- Content causes **real-world harm** — not through lies, but through **manipulation of context**
+- Adversaries **adapt in real time** to detection strategies
+- We must build a system that is **defensible, cost-aware, and adaptive**
+:::
+
+::: {.notes}
+Emphasize that this isn't about fake news detection — it's about contextual manipulation.
+:::
+
+---
+
+## The Constraints We Must Respect
+
+| Constraint | What It Means |
+|---|---|
+| **Signal Collapse** | Detection methods decay when overused |
+| **Partial Observability** | Content arrives in stages, not all at once |
+| **Human Trust Budget** | Only **20 human reviews/hour** |
+| **Multilingual Ambiguity** | Urdu, Roman Urdu, English — context-dependent |
+| **Poisoned Feedback** | ~15% of human labels are noisy or adversarial |
+| **Budget Reality** | PKR 50,000/month (~$175 USD) for everything |
+
+---
+
+## Mid-Challenge Update {.center}
+
+> "A large portion of harmful content is **factually correct**, but **contextually misleading**."
+
+::: {.fragment}
+Fact-checking alone is **not enough**.
+
+The system must reason about **framing, narrative, and selective presentation**.
+:::
+
+---
+
+## Our Approach: 3-Stage Adaptive Pipeline
+
+```{mermaid}
+%%| fig-width: 11
+flowchart TD
+    A["📨 User Submits Post"] --> B["⚡ Stage 1: Keyword Scan\n< 50ms | FREE"]
+    B -->|"0 hits"| S1["✅ Safe"]
+    B -->|"3+ hits"| H1["🚫 Auto-Remove"]
+    B -->|"1–2 hits"| C["🤖 Stage 2: Lightweight Claude\n~2s | ~$0.0002"]
+    C -->|"safe"| S2["✅ Safe"]
+    C -->|"harmful"| H2["🚫 Auto-Remove"]
+    C -->|"uncertain"| D["🔬 Stage 3: Detailed Claude\n~4s | ~$0.0004"]
+    D -->|"safe"| S3["✅ Safe"]
+    D -->|"harmful"| H3["🚫 Auto-Remove"]
+    D -->|"escalate"| E["👤 Human Review Queue\n20/hour budget"]
+
+    style B fill:#166534,stroke:#4ade80,color:#fff
+    style C fill:#854d0e,stroke:#facc15,color:#fff
+    style D fill:#991b1b,stroke:#f87171,color:#fff
+    style E fill:#1e3a5f,stroke:#60a5fa,color:#fff
+    style S1 fill:#14532d,stroke:#4ade80,color:#4ade80
+    style S2 fill:#14532d,stroke:#4ade80,color:#4ade80
+    style S3 fill:#14532d,stroke:#4ade80,color:#4ade80
+    style H1 fill:#7f1d1d,stroke:#f87171,color:#f87171
+    style H2 fill:#7f1d1d,stroke:#f87171,color:#f87171
+    style H3 fill:#7f1d1d,stroke:#f87171,color:#f87171
+```
+
+---
+
+## Stage 1: Keyword Scan {.smaller}
+
+**Fast, free, multilingual first filter**
+
+:::: {.columns}
+::: {.column width="55%"}
+
+```{mermaid}
+%%| fig-width: 6
+flowchart TD
+    A["Incoming Post"] --> B["Detect Language"]
+    B --> C["Scan Keywords\nEN + UR + Roman UR"]
+    C -->|"0 hits"| D["✅ Safe"]
+    C -->|"1–2 hits"| E["⚠️ Uncertain\n→ Stage 2"]
+    C -->|"3+ hits"| F["🚫 Harmful\nauto-remove"]
+
+    style D fill:#14532d,stroke:#4ade80,color:#4ade80
+    style E fill:#854d0e,stroke:#facc15,color:#fff
+    style F fill:#7f1d1d,stroke:#f87171,color:#f87171
+```
+
+:::
+
+::: {.column width="45%"}
+**Multilingual keywords:**
+
+```
+English: kill, bomb, attack, terrorism...
+Urdu:    قتل، بم، حملہ، دہشت، نفرت
+Roman:   maar, qatal, bomb, hamla...
+```
+
+**Language detection:**
+
+```python
+if urdu_chars > 30%:
+    return "urdu"
+if roman_urdu_markers >= 2:
+    return "roman_urdu"
+return "english"
+```
+:::
+::::
+
+**Cost: $0.00 | Latency: <50ms**
+
+---
+
+## Stage 2: Lightweight AI Analysis {.smaller}
+
+**Context-aware detection with prompt rotation**
+
+:::: {.columns}
+::: {.column width="55%"}
+
+```{mermaid}
+%%| fig-width: 6
+flowchart TD
+    A["Uncertain Post\nfrom Stage 1"] --> B{"Budget\nRemaining?"}
+    B -->|"No"| X["⚠️ Skip AI\n→ Escalate"]
+    B -->|"Yes"| C["Select Prompt\n(weighted random by decay)"]
+    C --> P1["safety_check_v1"]
+    C --> P2["context_analyzer_v1"]
+    C --> P3["narrative_detector_v1"]
+    C --> P4["framing_analyzer_v1"]
+    C --> P5["selective_presentation_v1"]
+    P1 & P2 & P3 & P4 & P5 --> D["Claude Haiku\nAnalysis"]
+    D --> E["Verdict + Confidence\n+ Manipulation Tactics"]
+
+    style B fill:#1e1b4b,stroke:#7c3aed,color:#fff
+    style D fill:#854d0e,stroke:#facc15,color:#fff
+    style X fill:#7f1d1d,stroke:#f87171,color:#f87171
+```
+
+:::
+
+::: {.column width="45%"}
+**What it detects beyond keywords:**
+
+- Selective facts presented to mislead
+- Cherry-picked statistics without context
+- Emotional manipulation with real data
+- True statements made misleading by omission
+- Misleading juxtaposition
+
+**Budget gate:** If monthly budget exceeded, skip AI → escalate to human.
+:::
+::::
+
+**Model: Claude Haiku | Cost: ~$0.0002/call | Latency: ~2s**
+
+---
+
+## Stage 3: Deep Analysis + Human Escalation {.smaller}
+
+**Full-context reasoning for the hardest cases**
+
+:::: {.columns}
+::: {.column width="50%"}
+**Receives from Stage 2:**
+
+- Original content + language
+- Stage 2 reasoning + verdict
+- Detected manipulation tactics
+
+**Analyzes:**
+
+- Cultural/linguistic context
+- Satire vs. genuine threat
+- What context is **missing**
+:::
+
+::: {.column width="50%"}
+**Critical principle:**
+
+> *"Content that is factually correct but deliberately omits important context **IS** harmful."*
+
+**If still uncertain → Escalate**
+
+Creates a `ReviewItem` with full AI reasoning for human moderator.
+:::
+::::
+
+**Model: Claude Haiku | Cost: ~$0.0004/call | Latency: ~4s**
+
+---
+
+## Constraint 1: Signal Collapse
+
+> *"Every detection method becomes less effective if overused."*
+
+:::: {.columns}
+::: {.column width="50%"}
+**Our solution: Detection method decay**
+
+- Each prompt variant has a **decay factor** (1.0 → 0.1)
+- Every use reduces it by **2%**
+- Selection is **weighted random** — overused methods picked less often
+- Minimum floor of **10%** — never fully excluded
+- Manual **reset** available when needed
+:::
+
+::: {.column width="50%"}
+
+```{mermaid}
+%%| fig-width: 5.5
+flowchart TD
+    A["Method Pool\n5 prompt variants"] --> B["Weighted Random\nSelection"]
+    B --> C["Selected Method\nruns analysis"]
+    C --> D["Record Usage\ndecay -= 2%"]
+    D --> E{"decay_factor\n< 0.1?"}
+    E -->|"Yes"| F["Floor at 0.1\nnever excluded"]
+    E -->|"No"| G["Updated weight\nfor next selection"]
+    F --> A
+    G --> A
+
+    style A fill:#1e1b4b,stroke:#7c3aed,color:#fff
+    style B fill:#1e1b4b,stroke:#a78bfa,color:#fff
+    style D fill:#854d0e,stroke:#facc15,color:#fff
+    style F fill:#7f1d1d,stroke:#f87171,color:#f87171
+```
+
+:::
+::::
+
+---
+
+## Constraint 2: Partial Observability
+
+> *"Content arrives in stages — waiting for full data violates latency."*
+
+```{mermaid}
+%%| fig-width: 11
+flowchart LR
+    subgraph S1["⚡ Stage 1 — sync, <50ms"]
+        A1["Metadata\n+ Keywords"]
+    end
+    subgraph S2["🤖 Stage 2 — async, ~2s"]
+        A2["Partial Content\n1 AI Prompt"]
+    end
+    subgraph S3["🔬 Stage 3 — async, ~4s"]
+        A3["Full Context\n+ Prior Reasoning"]
+    end
+
+    A1 -->|"uncertain"| A2
+    A2 -->|"uncertain"| A3
+
+    A1 -->|"clear verdict"| D1["✅ Done"]
+    A2 -->|"confident"| D2["✅ Done"]
+    A3 -->|"decides or escalates"| D3["✅ Done"]
+
+    style S1 fill:#166534,stroke:#4ade80,color:#fff
+    style S2 fill:#854d0e,stroke:#facc15,color:#fff
+    style S3 fill:#991b1b,stroke:#f87171,color:#fff
+    style D1 fill:#14532d,stroke:#4ade80,color:#4ade80
+    style D2 fill:#14532d,stroke:#4ade80,color:#4ade80
+    style D3 fill:#14532d,stroke:#4ade80,color:#4ade80
+```
+
+**Key:** Stages 2 & 3 run as **background tasks** — the user gets an immediate response. Post status updates asynchronously.
+
+---
+
+## Constraint 3: Human Trust Budget
+
+> *"Only 20 human reviews per hour."*
+
+:::: {.columns}
+::: {.column width="55%"}
+
+```{mermaid}
+%%| fig-width: 6
+flowchart TD
+    A["Stage 3 Escalates Post"] --> B["Review Queue"]
+    B --> C{"Reviews this\nhour < 20?"}
+    C -->|"Yes"| D["Moderator Reviews\n+ AI reasoning\n+ manipulation tactics"]
+    D --> E["Approve ✅"]
+    D --> F["Reject 🚫"]
+    C -->|"No"| G["⏳ HTTP 429\nBudget Exhausted\nWait for next hour"]
+
+    style B fill:#1e3a5f,stroke:#60a5fa,color:#fff
+    style C fill:#1e1b4b,stroke:#7c3aed,color:#fff
+    style E fill:#14532d,stroke:#4ade80,color:#4ade80
+    style F fill:#7f1d1d,stroke:#f87171,color:#f87171
+    style G fill:#854d0e,stroke:#facc15,color:#fff
+```
+
+:::
+
+::: {.column width="45%"}
+**Review queue provides:**
+
+- Original post content
+- Full AI reasoning from Stage 2 + 3
+- Detected manipulation tactics
+- Approve / Reject with reviewer notes
+
+**Most content never needs a human.** The 3-stage pipeline filters aggressively — only truly ambiguous cases escalate.
+:::
+::::
+
+---
+
+## Constraint 4: Multilingual Ambiguity
+
+> *"yeh fire hai" — praise or threat?*
+
+:::: {.columns}
+::: {.column width="50%"}
+**Language detection:**
+
+- **Urdu script** (Unicode `\u0600-\u06FF`)
+- **Roman Urdu** markers: *hai, nahi, yeh, kya, mein...*
+- Fallback: **English**
+
+Language passed to every AI prompt for context-aware analysis.
+:::
+
+::: {.column width="50%"}
+**How we avoid hard classification:**
+
+- Stage 2/3 prompts explicitly consider cultural context
+- "uncertain" is a **valid verdict** — no forced binary
+- Ambiguous content escalates to human reviewers who understand nuance
+:::
+::::
+
+::: {.fragment}
+**We penalize overconfidence, not uncertainty.**
+:::
+
+---
+
+## Constraint 5: Poisoned Feedback Loop
+
+> *"~15% of human labels are noisy or adversarial."*
+
+:::: {.columns}
+::: {.column width="55%"}
+
+```{mermaid}
+%%| fig-width: 6
+flowchart TD
+    A["Human Submits\nReview Decision"] --> B["Log: reviewer_id\ntimestamp, note"]
+    B --> C["Store alongside\nAI reasoning"]
+    C --> D["Audit Trail\n(no auto-retrain)"]
+    D --> E["Future: Label\nConfidence Scoring"]
+
+    N["⚠️ ~15% Noisy Labels"] -.->|"detected via\ndiscrepancy audit"| D
+
+    style A fill:#1e3a5f,stroke:#60a5fa,color:#fff
+    style D fill:#1e1b4b,stroke:#7c3aed,color:#fff
+    style N fill:#7f1d1d,stroke:#f87171,color:#f87171
+    style E fill:#14532d,stroke:#4ade80,color:#4ade80
+```
+
+:::
+
+::: {.column width="45%"}
+**Our approach: Audit trail, not blind trust**
+
+- Every human review is **logged** with reviewer ID, timestamp, and notes
+- AI reasoning is **preserved alongside** human decisions
+- No automatic retraining on raw labels
+- Discrepancies between AI and human can be audited
+- Foundation for future **label confidence scoring**
+:::
+::::
+
+---
+
+## Constraint 6: Budget Reality
+
+> *"PKR 50,000/month (~$175 USD) for everything."*
+
+:::: {.columns}
+::: {.column width="55%"}
+
+```{mermaid}
+%%| fig-width: 6
+flowchart TD
+    A["Claude API Call"] --> B["Log to cost_logs\ntokens × rate"]
+    B --> C["Monthly Spend\nTracker"]
+    C --> D{"spent <\n$175?"}
+    D -->|"Yes"| E["✅ Proceed\nwith AI analysis"]
+    D -->|"No"| F["⛔ Budget Gate\nKeyword-only mode\n+ Human escalation"]
+
+    style D fill:#1e1b4b,stroke:#7c3aed,color:#fff
+    style E fill:#14532d,stroke:#4ade80,color:#4ade80
+    style F fill:#7f1d1d,stroke:#f87171,color:#f87171
+```
+
+:::
+
+::: {.column width="45%"}
+**Estimated monthly cost:**
+
+| Component | Volume | Cost |
+|---|---|---|
+| Stage 1 (keywords) | Unlimited | $0 |
+| Stage 2 (Haiku) | ~50K calls | ~$10 |
+| Stage 3 (Haiku) | ~10K calls | ~$4 |
+| **Total** | | **~$14/mo** |
+
+<br>
+
+**$14 of $175 = 8% utilization**
+
+Room for **12x growth** before budget pressure.
+:::
+::::
+
+---
+
+## Design Reasoning: Why a Pipeline? {.smaller}
+
+**The core question:** How should content flow through the system?
+
+:::: {.columns}
+::: {.column width="50%"}
+**Alternatives we rejected:**
+
+1. **Single-model classification** — Send everything to Claude
+   - Costs ~$0.0004/post. At 100K posts/mo = $40. Feasible but wasteful — most content is obviously safe or obviously harmful
+   - No adaptation. One prompt = one signal = easy for adversaries to learn
+
+2. **Ensemble of models voting** — Run 3 models, take majority
+   - 3x cost for every post. Blows budget at scale
+   - Adversary only needs to fool 2 of 3
+
+3. **Human-first triage** — Humans scan everything, AI assists
+   - 20 reviews/hour = 480/day. Platform likely has thousands of posts. Impossible
+:::
+
+::: {.column width="50%"}
+**Why staged pipeline wins:**
+
+- **Cost cascade**: Most content exits at Stage 1 (free). Only uncertain cases pay for AI. Only the hardest cases use expensive Stage 3
+- **Latency cascade**: Easy decisions are instant. Hard decisions take longer — but that's acceptable because they're genuinely hard
+- **Each stage adds different information**: keywords → single AI perspective → full context reasoning
+- **Maps directly to partial observability constraint**: Stage 1 = metadata, Stage 2 = partial content, Stage 3 = full content
+:::
+::::
+
+::: {.fragment}
+**The pipeline is not just an optimization — it's the natural shape of the problem.**
+:::
+
+---
+
+## Design Reasoning: Why These Thresholds? {.smaller}
+
+**Stage 1: Why 3+ keywords = auto-remove?**
+
+:::: {.columns}
+::: {.column width="50%"}
+**The tradeoff:**
+
+- **Too low (1 hit)**: "The bomb pasta recipe was killer" gets removed. High false positives → users lose trust in the platform
+- **Too high (5+ hits)**: Genuinely harmful content with 3-4 harmful terms slips through to Stage 2, wasting AI budget
+- **3 hits**: A post with 3 harmful keywords across 3 languages is almost certainly not accidental. False positive rate is low enough to justify auto-action
+
+**Why 0 hits = safe (skip AI)?**
+
+If a post contains zero matches across 24+ keywords in 3 languages, the probability it's harmful via explicit content is very low. Contextual manipulation (no keywords) is harder to detect at Stage 1 — but that's exactly what Stage 2's prompt rotation handles.
+:::
+
+::: {.column width="50%"}
+**The honest gap:**
+
+Contextually misleading content with zero harmful keywords **will bypass Stage 1**. This is by design.
+
+- "Unemployment rose 50% in Karachi" (true but cherry-picked from a recovery quarter)
+- Contains no harmful keywords
+- Passes Stage 1 as "safe"
+
+**Our mitigation:** This is why the mid-challenge update matters. We added 5 manipulation-focused prompt variants specifically for content that is "factually correct but contextually misleading." But these only run in Stage 2 — and Stage 2 only runs on uncertain content from Stage 1.
+
+**We accept this gap** because the alternative (running AI on every post) costs 12x more and doesn't respect the budget constraint.
+:::
+::::
+
+---
+
+## Design Reasoning: Why Prompt Rotation? {.smaller}
+
+**The problem:** If we use one prompt, adversaries learn exactly what it looks for and craft content to avoid it.
+
+```{mermaid}
+%%| fig-width: 11
+flowchart LR
+    subgraph Problem["❌ Single Prompt — Adversary Learns Pattern"]
+        P1["Always check for\nexplicit harm"] --> ADV1["Adversary avoids\nexplicit terms"] --> FAIL["Content passes\nevery time"]
+    end
+
+    subgraph Solution["✅ Rotating Prompts — Adversary Can't Predict"]
+        R1["safety_check_v1\n(explicit harm)"]
+        R2["context_analyzer_v1\n(framing bias)"]
+        R3["narrative_detector_v1\n(cherry-picked data)"]
+        R4["framing_analyzer_v1\n(loaded language)"]
+        R5["selective_presentation_v1\n(missing context)"]
+        R1 & R2 & R3 & R4 & R5 --> WIN["Adversary must evade\nALL 5 perspectives"]
+    end
+
+    style Problem fill:#7f1d1d,stroke:#f87171,color:#fff
+    style Solution fill:#14532d,stroke:#4ade80,color:#fff
+```
+
+**Key insight:** Each prompt variant targets a **different manipulation technique**. An adversary who learns to bypass "explicit harm detection" still gets caught by "selective presentation detection."
+
+---
+
+## Design Reasoning: Why Decay, Not Rotation? {.smaller}
+
+**Alternative considered:** Simple round-robin (cycle through prompts 1→2→3→4→5→1...)
+
+:::: {.columns}
+::: {.column width="50%"}
+**Why round-robin fails:**
+
+- **Predictable.** Adversary observes which posts get caught and when. After 5 posts, they know the cycle
+- **No memory.** If prompt 3 catches 90% of current attacks, round-robin still only uses it 20% of the time
+- **No degradation signal.** No way to know when a method is becoming ineffective
+
+**Why weighted random with decay wins:**
+
+- **Unpredictable.** Even with identical content, the selected prompt varies
+- **Self-adjusting.** Overused methods naturally get selected less. Fresh methods get more weight
+- **Observable.** Dashboard shows decay factors — operators can see system health in real-time
+:::
+
+::: {.column width="50%"}
+**The decay math:**
+
+- `decay_rate = 0.02` (2% per use)
+- `min_decay = 0.1` (10% floor)
+- After 45 uses: `1.0 - (45 × 0.02) = 0.10` (floor)
+
+**Why 2% and not 5% or 10%?**
+
+- **5-10%**: Methods hit floor after 10-18 uses. Too aggressive — methods rotate too fast, the system becomes unstable
+- **1%**: Takes 90 uses to reach floor. Too slow — adversary has too many attempts against the same method
+- **2%**: ~45 uses per method. With 5 methods at equal usage, that's ~225 total posts before any method hits floor. Reasonable for a daily cycle
+
+**Why a floor of 10%, not 0%?**
+
+Excluding a method entirely means adversaries know it's gone. A 10% chance means it could still appear — maintaining uncertainty.
+:::
+::::
+
+---
+
+## Design Reasoning: Budget Strategy {.smaller}
+
+**The budget is the hardest constraint.** $175/mo sounds generous until you do the math.
+
+:::: {.columns}
+::: {.column width="50%"}
+**Why Claude Haiku (not Sonnet/Opus)?**
+
+| Model | Input/1K tok | Output/1K tok | Cost per call |
+|---|---|---|---|
+| Haiku | $0.00025 | $0.00125 | ~$0.0002 |
+| Sonnet | $0.003 | $0.015 | ~$0.003 |
+| Opus | $0.015 | $0.075 | ~$0.015 |
+
+- Sonnet = **15x** more expensive → only ~58K calls/mo
+- Opus = **75x** more expensive → only ~11K calls/mo
+- Haiku = **~875K calls/mo** budget capacity
+
+**Tradeoff:** Haiku is less capable at nuanced reasoning. We compensate with **specific, targeted prompts** that tell it exactly what to look for, rather than asking for general analysis.
+:::
+
+::: {.column width="50%"}
+**Why not fine-tune a local model?**
+
+- Fine-tuning cost: $500+ for a useful model. Exceeds 3 months of budget
+- Hosting cost: GPU instance ~$100-500/mo. Eats entire budget
+- Maintenance: Retraining as adversaries adapt requires ongoing compute
+- With Haiku at ~$14/mo, we have **$161 of headroom** for spikes
+
+**Graceful degradation when budget runs out:**
+
+```
+Budget OK    → Stage 1 + 2 + 3 (full pipeline)
+Budget tight → Stage 1 + 2 only (skip Stage 3)
+Budget gone  → Stage 1 only (keywords + human)
+```
+
+The system never fully stops. It degrades to a less capable but still functional mode. Keywords still catch obvious harm. Humans still review escalated content.
+:::
+::::
+
+---
+
+## Design Reasoning: Human Review Budget {.smaller}
+
+**20 reviews/hour = the system's most precious resource.**
+
+:::: {.columns}
+::: {.column width="50%"}
+**Why enforce at submission time, not at queue entry?**
+
+- **Queue entry enforcement**: Posts pile up in queue, moderator sees them but can't act. Frustrating UX, false sense of backlog
+- **Submission enforcement**: Moderator sees exactly what they can act on. No phantom queue. HTTP 429 is clear feedback: "come back next hour"
+
+**Why not prioritize which posts humans see?**
+
+We considered scoring escalated posts by confidence and showing lowest-confidence first. We rejected this because:
+
+- Adds complexity without clear benefit at 20/hr
+- Low-confidence posts aren't necessarily higher impact
+- FIFO is transparent — moderators trust it
+:::
+
+::: {.column width="50%"}
+**How AI reasoning helps humans:**
+
+Each review item shows:
+
+- The AI's **verdict** from Stage 2 and 3
+- The AI's **reasoning** (natural language explanation)
+- Detected **manipulation tactics** (cherry-picked stats, loaded language, etc.)
+
+**This is deliberate.** A moderator reviewing "yeh fire hai" without context is guessing. A moderator reviewing it with "AI detected possible threat language, but confidence is low because 'fire' is commonly used as praise in Roman Urdu" makes a **better decision faster**.
+
+**The tradeoff:** AI reasoning could bias the human. We accept this because:
+
+- Unbiased humans with no context make worse decisions
+- The 15% noise rate already means human labels aren't pure
+- AI reasoning is logged alongside human decisions for auditing
+:::
+::::
+
+---
+
+## Design Reasoning: Multilingual Approach {.smaller}
+
+**Why heuristic language detection, not a library?**
+
+:::: {.columns}
+::: {.column width="50%"}
+**Alternatives considered:**
+
+1. **langdetect / fasttext**: Good for clean text. Fails on Roman Urdu (looks like misspelled English), code-mixed text ("yeh so cool hai"), and short posts
+2. **Google Translate API**: Costs money per call. Adds latency. Eats into $175 budget
+3. **Let Claude detect language**: Already paying for AI in Stage 2. But Stage 1 needs language for keyword selection *before* Claude runs
+
+**Our heuristic:**
+
+```python
+# Urdu script = Urdu (high confidence)
+if urdu_chars > 30% of text → "urdu"
+
+# Roman Urdu markers (hai, nahi, yeh, kya, mein...)
+if roman_urdu_words >= 2 → "roman_urdu"
+
+# Fallback
+else → "english"
+```
+:::
+
+::: {.column width="50%"}
+**Tradeoffs we accept:**
+
+- **False positive:** "Yeh brand hai best" detected as Roman Urdu. Harmless — Stage 2 prompt includes language context either way
+- **False negative:** Single Roman Urdu word in English text ("that's a jugaar solution") detected as English. Low risk — Claude understands code-mixing regardless
+- **30% threshold for Urdu:** Lower catches more Urdu but misclassifies Arabic. Higher misses short Urdu posts. 30% is a pragmatic middle ground
+
+**Why this matters for moderation:**
+
+"yeh fire hai" classified correctly as Roman Urdu triggers **cultural context analysis** in Stage 2/3 prompts. Misclassified as English, Claude might miss that "fire" is common praise in South Asian slang.
+
+**We don't force binary classification.** "Uncertain" language → AI gets the full text and figures it out.
+:::
+::::
+
+---
+
+## Design Reasoning: Poisoned Labels {.smaller}
+
+**15% noise means 1 in ~7 human labels is wrong. This is a real threat.**
+
+:::: {.columns}
+::: {.column width="50%"}
+**What we do:**
+
+- **Store everything.** Every human decision + AI reasoning + timestamps + reviewer identity
+- **Never auto-retrain.** Human labels do not flow back into the system's detection logic
+- **Preserve AI reasoning alongside human decisions.** If AI said "harmful" and human said "safe," that discrepancy is visible
+
+**Why this is enough for now:**
+
+The problem statement says "blindly trusting labels can reinforce harmful patterns." Our system **doesn't trust labels at all** — it uses them for final post disposition only, not for learning.
+:::
+
+::: {.column width="50%"}
+**What we'd add with more time:**
+
+```{mermaid}
+%%| fig-width: 5
+flowchart TD
+    A["Human Label\nSubmitted"] --> B["Compare to\nAI Prediction"]
+    B --> C{"Agreement?"}
+    C -->|"Yes"| D["High confidence\nlabel"]
+    C -->|"No"| E["Flag for\nsecond review"]
+    E --> F["Track reviewer\ndisagreement rate"]
+    F --> G{"Reviewer noise\n> 30%?"}
+    G -->|"Yes"| H["Reduce reviewer\ntrust weight"]
+    G -->|"No"| I["Accept as\nlegitimate disagreement"]
+
+    style E fill:#854d0e,stroke:#facc15,color:#fff
+    style H fill:#7f1d1d,stroke:#f87171,color:#f87171
+```
+
+**Per-reviewer trust scoring.** Track each reviewer's agreement rate with AI. Reviewers who consistently disagree with high-confidence AI verdicts get flagged. This catches coordinated adversarial labeling.
+:::
+::::
+
+---
+
+## Design Reasoning: What We Chose NOT to Build {.smaller}
+
+**Simplicity with strong reasoning is valued. Here's what we deliberately left out.**
+
+:::: {.columns}
+::: {.column width="50%"}
+**No ML training pipeline**
+
+- Fine-tuning requires labeled data. Our labels have 15% noise
+- Training costs exceed monthly budget
+- A pre-trained LLM with good prompts outperforms a small fine-tuned model on nuanced tasks like context manipulation
+- **Decision:** Use Claude's general reasoning ability + specific prompts
+
+**No image/video analysis**
+
+- Problem statement focuses on text content and framing
+- Image analysis (OCR, deepfake detection) adds cost and complexity
+- Haiku's vision capability exists but costs more per call
+- **Decision:** Text-only pipeline. Acknowledge gap in failure modes
+
+**No real-time adversary fingerprinting**
+
+- Tracking posting patterns (timing, accounts, networks) is powerful but requires significant infrastructure
+- Rate limiting and user-level analysis need Redis, background workers, graph databases
+- **Decision:** Out of scope for budget. Acknowledge as future work
+:::
+
+::: {.column width="50%"}
+**No Celery / Redis / message queue**
+
+- FastAPI `BackgroundTasks` is simpler and sufficient
+- No persistent queue means if server restarts, in-flight moderation is lost
+- **Tradeoff:** Simplicity over durability. For a demo, this is fine. For production, we'd add Redis
+
+**No confidence calibration**
+
+- Claude returns confidence scores (0.0-1.0) but they're not calibrated
+- A "0.7 confidence" doesn't mean 70% accuracy
+- **Tradeoff:** We use confidence for logging/display, not for hard decisions. Verdicts (safe/harmful/uncertain) drive logic, not scores
+
+**No A/B testing of prompts**
+
+- We could run two prompts on the same content and compare
+- 2x cost per post. Not justified given budget headroom
+- **Decision:** Rely on decay mechanism to naturally rotate. Add A/B testing if detection quality drops
+:::
+::::
+
+---
+
+## The Tradeoff Map {.smaller}
+
+Every design decision is a tradeoff. Here's how they connect:
+
+```{mermaid}
+%%| fig-width: 11
+flowchart TD
+    COST["💰 Lower Cost"] ---|"tension"| ACC["🎯 Higher Accuracy"]
+    ACC ---|"tension"| SPEED["⚡ Lower Latency"]
+    SPEED ---|"tension"| ADAPT["🔄 Adaptability"]
+    ADAPT ---|"tension"| SIMPLE["📐 Simplicity"]
+    SIMPLE ---|"tension"| COST
+
+    COST --> D1["Haiku over Sonnet\nKeyword pre-filter\nSkip AI for safe content"]
+    ACC --> D2["5 prompt variants\nStage 3 deep analysis\nHuman review for hardest"]
+    SPEED --> D3["Async pipeline\nEarly exit on confidence\nBackground tasks"]
+    ADAPT --> D4["Weighted decay\nPrompt rotation\nManual reset"]
+    SIMPLE --> D5["3 stages, not 10\nNo ML training\nNo Redis"]
+
+    style COST fill:#166534,stroke:#4ade80,color:#fff
+    style ACC fill:#991b1b,stroke:#f87171,color:#fff
+    style SPEED fill:#854d0e,stroke:#facc15,color:#fff
+    style ADAPT fill:#1e1b4b,stroke:#7c3aed,color:#fff
+    style SIMPLE fill:#1e3a5f,stroke:#60a5fa,color:#fff
+```
+
+**Our position:** We optimize for **cost and adaptability** first, accepting slightly lower accuracy on edge cases. We compensate with human review for the cases that matter most.
+
+---
+
+## Failure Modes {.smaller}
+
+We declare three scenarios where the system **will** fail:
+
+:::: {.columns}
+::: {.column width="33%"}
+**1. Coordinated Novel Attack**
+
+A new manipulation tactic not covered by any prompt variant.
+
+*Impact:* Harmful content passes through all 3 stages undetected.
+
+*Containment:* Human reviewers catch patterns → new prompt variants added manually.
+:::
+
+::: {.column width="33%"}
+**2. Budget Exhaustion Under Attack**
+
+Adversary floods system to burn through AI budget.
+
+*Impact:* Falls back to keyword-only detection — many harmful posts slip through.
+
+*Containment:* Rate limiting, keyword filter still catches obvious harm, escalation to humans continues.
+:::
+
+::: {.column width="33%"}
+**3. Review Queue Saturation**
+
+More than 20 ambiguous posts/hour during a crisis.
+
+*Impact:* Escalated posts wait in queue — delayed moderation.
+
+*Containment:* AI still provides reasoning, most harmful content caught in Stages 1-2. Queue overflow is visible on dashboard.
+:::
+::::
+
+---
+
+## Tech Stack {.smaller}
+
+```{mermaid}
+%%| fig-width: 11
+flowchart LR
+    subgraph Frontend["🖥️ Frontend — Next.js 16"]
+        FE1["Dashboard"]
+        FE2["Content Feed"]
+        FE3["Review Queue"]
+        FE4["System Health"]
+    end
+
+    subgraph Backend["⚙️ Backend — FastAPI"]
+        BE1["Routes Layer"]
+        BE2["Service Layer"]
+        BE3["Background Tasks"]
+    end
+
+    subgraph External["🔌 External"]
+        AI["Claude Haiku\n(Anthropic SDK)"]
+        DB[("PostgreSQL 16\n(SQLAlchemy async)")]
+    end
+
+    Frontend -->|"HeyAPI SDK\n+ react-query"| BE1
+    BE1 --> BE2
+    BE2 --> BE3
+    BE3 --> AI
+    BE2 --> DB
+
+    style Frontend fill:#1e1b4b,stroke:#7c3aed,color:#fff
+    style Backend fill:#166534,stroke:#4ade80,color:#fff
+    style External fill:#854d0e,stroke:#facc15,color:#fff
+```
+
+**Everything runs with:** `make up` + `make dev-frontend`
+
+---
+
+## Live Dashboard
+
+**4 pages for full operational visibility:**
+
+| Page | Shows |
+|---|---|
+| **Dashboard** | Stats cards, budget progress, content by status/language, recent activity |
+| **Content Feed** | Submit posts, view moderation results per stage, manual escalation |
+| **Review Queue** | Pending items with AI reasoning, approve/reject, hourly budget counter |
+| **System Health** | Detection method decay bars, cost breakdown, reset controls |
+
+::: {.fragment}
+All data refreshes every 5–10 seconds via react-query.
+:::
+
+---
+
+## Why This Works {.center}
+
+::: {.incremental}
+1. **Simple reasoning over complex engineering** — 3 clear stages, not a black box
+2. **Adaptive by design** — prompt rotation + decay prevents adversary learning
+3. **Cost-efficient** — $14/mo of $175 budget, with graceful degradation
+4. **Honest about failure** — declared failure modes with containment strategies
+5. **Context over classification** — detects manipulation, not just keywords
+6. **Human-in-the-loop, not human-dependent** — 20/hr budget used only when needed
+:::
+
+---
+
+## {.center}
+
+::: {style="font-size: 1.8em; font-weight: bold;"}
+"The enemy learns.
+Static systems fail.
+Only adaptive thinking survives."
+:::
+
+<br>
+
+::: {style="font-size: 1.2em; opacity: 0.8;"}
+Stranger Syntax — Mind-Flayer Patch v2
+:::
+
+<br>
+
+::: {style="font-size: 0.9em; opacity: 0.6;"}
+Friends don't lie. Thank you.
+:::
